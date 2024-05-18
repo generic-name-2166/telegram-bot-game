@@ -1,0 +1,14 @@
+{
+  "name": "telegram-bot-game",
+  "module": "index.ts",
+  "scripts": {
+    "build": "bun build index.ts --outdir .out  --target node --format esm --minify --entry-naming [dir]/[name].m[ext]"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "telegraf": "^4.16.3"
+  }
+}
