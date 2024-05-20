@@ -1,0 +1,8 @@
+{
+  "name": "telegram-bot-game",
+  "module": "index.ts",
+  "type": "module",
+  "dependencies": {
+    "telegraf": "^4.16.3"
+  }
+}

@@ -1,6 +1,7 @@
 {
   "name": "telegram-bot-game",
   "module": "index.ts",
+  "type": "module",
   "scripts": {
     "build": "bun bunbuild.ts",
     "format": "prettier -w ."
