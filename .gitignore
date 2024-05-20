@@ -1,5 +1,6 @@
 node_modules/
 .out/
+*.zip
 
 bun.lockb
 yarn.lock
