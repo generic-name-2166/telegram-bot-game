@@ -1,6 +1,16 @@
-node_modules/
-.out/
+.idea/
+.vscode/
+
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+venv/
+*.egg-info
+
+build/
+dist/
 *.zip
 
-bun.lockb
-yarn.lock
+.coverage
+htmlcov/
