@@ -25,7 +25,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 def main(event: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Handle restarts here, somehow
     # TODO
-    application = ApplicationBuilder().token(os.environ()).build()
+    application = ApplicationBuilder().token(os.environ["BOT_TOKEN"]).build()
 
     start_handler = CommandHandler("start", start)
     application.add_handler(start_handler)
