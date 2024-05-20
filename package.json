@@ -2,10 +2,12 @@
   "name": "telegram-bot-game",
   "module": "index.ts",
   "scripts": {
-    "build": "bun build index.ts --outdir .out  --target node --format esm --minify --entry-naming [dir]/[name].m[ext]"
+    "build": "bun bunbuild.ts",
+    "format": "prettier -w ."
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "prettier": "^3.2.5",
     "typescript": "^5.4.5"
   },
   "dependencies": {
