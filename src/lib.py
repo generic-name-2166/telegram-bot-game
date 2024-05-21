@@ -1,24 +1,8 @@
 import os
-from telegram import Update
-from telegram.ext import (
-    Application,
-    ApplicationBuilder,
-    CommandHandler,
-    MessageHandler,
-    filters,
-    ContextTypes,
-)
-
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!"
-    )
-
-
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Echo the user message."""
-    await update.message.reply_text(update.message.text)
+import asyncio
+import warnings
+from telegram import Bot, Update
+from telegram.error import Forbidden, NetworkError
 
 
 class Singleton(type):
@@ -30,19 +14,60 @@ class Singleton(type):
         return cls._instances[cls]
 
 
+async def echo(update: Update) -> None:
+    if update.message and update.message.text:
+        # Reply to the message
+        await update.message.reply_text(update.message.text)
+
+
 class App(metaclass=Singleton):
     def __init__(self) -> None:
-        self.app: Application = (
-            ApplicationBuilder().token(os.environ["BOT_TOKEN"]).build()
+        self.bot: Bot = Bot(os.environ["BOT_TOKEN"])
+        self.update_id: int = 0
+        self.is_initialized: bool = False
+
+    async def start(self) -> None:
+        if self.is_initialized:
+            return
+        await self.bot.set_webhook(
+            url="https://d5d03fs5mutqpqb4qddc.apigw.yandexcloud.net/echo",
+            allowed_updates=Update.ALL_TYPES,
         )
 
-        start_handler: CommandHandler = CommandHandler("start", start)
-        self.app.add_handler(start_handler)
+        await self.bot.initialize()
 
-        self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+        try:
+            self.update_id = (await self.bot.get_updates())[0].update_id
+        except IndexError:
+            self.update_id = 0
 
-    async def webserve(self, body: dict) -> None:
-        async with self.app:
-            await self.app.start()
-            await self.app.update_queue.put(Update.de_json(data=body, bot=self.app.bot))
-            await self.app.stop()
+        self.is_initialized = True
+
+    async def stop(self) -> None:
+        if not self.is_initialized:
+            return
+        await self.bot.shutdown()
+        self.is_initialized = False
+
+    async def handle(self) -> None:
+        try:
+            updates: list[Update] = await self.bot.get_updates(
+                offset=self.update_id,
+                timeout=10,
+                allowed_updates=Update.ALL_TYPES,
+            )
+            warnings.warn(str(updates))
+            for update in updates:
+                self.update_id += 1
+                await echo(update)
+                return
+            return
+        except NetworkError:
+            await asyncio.sleep(1)
+            warnings.warn("Network Error")
+        except Forbidden:
+            self.update_id += 1
+            warnings.warn("Blocked")
+        except BaseException:
+            warnings.warn("Shutting down")
+            await self.stop()

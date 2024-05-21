@@ -1,6 +1,9 @@
 # Hate this project structure
 from typing import Optional
 import json
+
+# import asyncio
+# import warnings
 from src.lib import App
 
 
@@ -14,8 +17,9 @@ def get_body(event: Optional[dict]) -> dict:
 
 async def handler(event: Optional[dict], context: Optional[dict]) -> None:
     # TODO
-    body: dict = get_body(event)
-    await App().webserve(body)
+    # body: dict = get_body(event)
+    await App().start()
+    await App().handle()
 
     return {
         "statusCode": 200,
@@ -26,3 +30,19 @@ async def handler(event: Optional[dict], context: Optional[dict]) -> None:
             }
         ),
     }
+
+
+""" async def main() -> None:
+    app: App = App()
+    await app.start()
+
+    try:
+        while True:
+            await app.handle()
+    finally:
+        await app.stop()
+
+
+if __name__ == "__main__":
+    warnings.warn("Main")
+    asyncio.run(main()) """
