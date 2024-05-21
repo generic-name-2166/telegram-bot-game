@@ -3,15 +3,33 @@ import json
 import os
 import warnings
 from telegram import Update
-from telegram.ext import Application, ApplicationBuilder, CallbackContext, CommandHandler, MessageHandler, filters
+from telegram.ext import (
+    Application,
+    ApplicationBuilder,
+    CallbackContext,
+    CommandHandler,
+    MessageHandler,
+    filters,
+)
 
 
-def get_body(event: Optional[dict]) -> Optional[dict]:
+def parse_body(message: dict) -> Optional[dict]:
     try:
-        result = json.loads(event.get("body", "null")) if event is not None else None
-    except json.JSONDecodeError:
+        body = message["details"]["message"]["body"]
+        result = json.loads(body) if message is not None else None
+    except (json.JSONDecodeError, KeyError) as e:
+        warnings.warn(f"JSON error {e}")
         result = None
     return result
+
+
+def get_body(event: Optional[dict]) -> Optional[list[dict]]:
+    if event is None:
+        return None
+    messages: Optional[list[dict]] = event.get("messages")
+    if messages is None:
+        return None
+    return list(filter(lambda x: x is not None, map(parse_body, messages)))
 
 
 class Singleton(type):
@@ -34,8 +52,10 @@ async def echo(update: Update, context: CallbackContext) -> None:
 
 class App(metaclass=Singleton):
     def __init__(self) -> None:
-        self.app: Application = ApplicationBuilder().token(os.environ["BOT_TOKEN"]).build()
-        
+        self.app: Application = (
+            ApplicationBuilder().token(os.environ["BOT_TOKEN"]).build()
+        )
+
         self.app.add_handler(CommandHandler("start", start))
         self.app.add_handler(MessageHandler(filters.TEXT, echo))
 
@@ -58,18 +78,24 @@ class App(metaclass=Singleton):
 
     async def handle_update(self, body: dict) -> None:
         try:
-            update: Update = Update.de_json(body, bot=None)
+            update: Update = Update.de_json(body, bot=self.app.bot)
             warnings.warn("Processing")
             await self.app.process_update(update)
-        except BaseException:
+        except BaseException as e:
+            warnings.warn(f"Exception occured {e}")
             await self.stop()
 
 
 async def handler(event: Optional[dict], context: Optional[dict]) -> dict:
-    body: Optional[dict] = get_body(event)
-    if body is not None:
+    bodies: Optional[list[dict]] = get_body(event)
+    if bodies is not None:
         app: App = App()
-        await app.handle_update(body)
+        await app.start()
+        warnings.warn(f"{len(bodies)=}")
+        for body in bodies:
+            await app.handle_update(body)
+    else:
+        warnings.warn(f"Body is empty {body}")
     return {
         "statusCode": 200,
         "body": "",
