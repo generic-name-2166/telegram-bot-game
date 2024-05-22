@@ -1,8 +1,8 @@
 from typing import Optional, Self
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import random
 
-from board import BOARD, Tile, TileType
+from src.board import BOARD, Tile, TileType
 
 
 MAX_HOUSE = 4
@@ -18,6 +18,10 @@ class Player:
     username: Optional[str]
     money: int
     position: int
+    # Tile position to house count on the tile
+    # Hotel counts as 5th house
+    # Tiles that don't have houses won't look at the value
+    ownership: dict[int, int] = field(default_factory=dict)
 
     @staticmethod
     def initialize(user_id: int, username: Optional[str]) -> Self:

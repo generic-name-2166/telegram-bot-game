@@ -33,7 +33,7 @@ async def handler(event: Optional[dict], context: Optional[dict]) -> dict:
         for body in bodies:
             await app.handle_update(body)
     else:
-        warnings.warn(f"Body is empty {body}")
+        warnings.warn(f"Body is empty {bodies}")
     return {
         "statusCode": 200,
         "body": "",

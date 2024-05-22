@@ -6,7 +6,7 @@ from telegram.ext import (
 )
 import warnings
 
-from command import add_all_handlers
+from src.command import add_all_handlers
 
 
 class Singleton(type):
