@@ -1,2 +1,1 @@
-python-telegram-bot==21.2.0
-ydb==3.11.3 
+python-telegram-bot==21.2.0 
