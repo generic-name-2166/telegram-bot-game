@@ -29,7 +29,6 @@ async def handler(event: Optional[dict], context: Optional[dict]) -> dict:
     if bodies is not None:
         app: App = App()
         await app.start()
-        warnings.warn(f"{len(bodies)=}")
         for body in bodies:
             await app.handle_update(body)
     else:
