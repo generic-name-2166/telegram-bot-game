@@ -5,6 +5,7 @@ from telegram.ext import (
     ApplicationBuilder,
 )
 import warnings
+from dataclasses import dataclass
 
 from src.command import add_all_handlers
 
@@ -18,7 +19,11 @@ class Singleton(type):
         return cls._instances[cls]
 
 
+@dataclass(init=False, slots=True)
 class App(metaclass=Singleton):
+    app: Application
+    is_initialized: bool
+
     def __init__(self) -> None:
         self.app: Application = (
             ApplicationBuilder().token(os.environ["BOT_TOKEN"]).build()

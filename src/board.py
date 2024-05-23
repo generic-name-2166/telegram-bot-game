@@ -404,3 +404,16 @@ BOARD: list[Tile] = [
 ]
 
 assert len(BOARD) == 40
+
+
+def find_street(name: str) -> Optional[int]:
+    for street_index in COLOR_SETS.keys():
+        if BOARD[street_index].name == name:
+            return street_index
+    for utility_index in UTILITIES.keys():
+        if BOARD[utility_index].name == name:
+            return utility_index
+    for railroad_index in RAILROAD_TILES:
+        if BOARD[railroad_index].name == name:
+            return railroad_index
+    return None
