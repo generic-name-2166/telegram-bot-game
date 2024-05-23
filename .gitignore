@@ -11,8 +11,13 @@ venv/
 build/
 dist/
 *.zip
+*.pyd
+*.so
 
 secret.txt
 
 .coverage
 htmlcov/
+
+Cargo.lock
+target/

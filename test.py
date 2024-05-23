@@ -1,6 +1,7 @@
 import os
 import asyncio
 
+import monopoly
 from index import handler
 
 
@@ -27,3 +28,4 @@ async def test() -> None:
 
 if __name__ == "__main__":
     asyncio.run(test())
+    print(type(monopoly.add(0, 1)))
