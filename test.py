@@ -28,4 +28,7 @@ async def test() -> None:
 
 if __name__ == "__main__":
     asyncio.run(test())
-    print(type(monopoly.add(0, 1)))
+    game = monopoly.Game(((0, "Gaming"),))
+    output = game.roll(0)
+    print(output.out)
+    print(output.warning)

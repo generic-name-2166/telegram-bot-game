@@ -1,23 +1,42 @@
-use pyo3::prelude::{pyfunction, pymodule, PyResult, PyModule, Bound, wrap_pyfunction};
+mod game;
+mod io;
+
+use io::PoorResult;
+use pyo3::prelude::{
+    pyclass, pyfunction, pymethods, pymodule, wrap_pyfunction, Bound, PyModule, PyResult,
+};
+
+use crate::game::Game;
 
 #[pyfunction]
-pub fn add(left: usize, right: usize) -> PyResult<String> {
+fn add(left: usize, right: usize) -> PyResult<String> {
     Ok((left + right).to_string())
+}
+
+#[pyclass(name = "Game")]
+struct PyGame {
+    inner: Game,
+}
+
+#[pymethods]
+impl PyGame {
+    #[new]
+    fn new(info: Vec<(usize, Option<String>)>) -> Self {
+        Self {
+            inner: Game::new(info),
+        }
+    }
+    fn roll(&mut self, caller_id: usize) -> PoorResult {
+        PoorResult::from(self.inner.roll(caller_id))
+    }
+    fn get_status(&mut self) -> String {
+        self.inner.get_status()
+    }
 }
 
 #[pymodule]
 fn monopoly(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(add, m)?)?;
+    m.add_class::<PyGame>()?;
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
 }
