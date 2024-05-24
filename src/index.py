@@ -2,7 +2,7 @@ from typing import Optional
 import json
 import warnings
 
-from src.lib import App
+from lib import App
 
 
 def parse_body(message: dict) -> Optional[dict]:

@@ -9,16 +9,15 @@ if (!(Test-Path -Path $linuxPath) -or !(Test-Path -Path $winPath))
 
 .\clear.ps1
 mkdir build | Out-Null
-mkdir build\src | Out-Null
 
-cp index.py build
+cp "src\index.py" build
 cp $linuxPath "build\monopoly.cpython-312-x86_64-linux-gnu.so"
-cp "src\__init__.py" "build\src"
-cp "src\lib.py" "build\src"
-cp "src\db.py" "build\src"
+cp "src\__init__.py" build
+cp "src\lib.py" build
+cp "src\db.py" build
 cp requirements.txt build
 
-cp $winPath ".\monopoly.pyd"
-cp $linuxPath ".\monopoly.cpython-310-x86_64-linux-gnu.so"
+cp $winPath "src\monopoly.pyd"
+cp $linuxPath "src\monopoly.cpython-310-x86_64-linux-gnu.so"
 
 Compress-Archive -Path build\* -DestinationPath build.zip
