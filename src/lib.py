@@ -137,7 +137,11 @@ class App(metaclass=Singleton):
         user_id: int = update.message.from_user.id
         # TODO debate having db connection here
 
-        output = self.games[chat_id].roll(user_id)
+        game: Optional[Game] = self.games.get(chat_id, None)
+        if game is None:
+            return
+
+        output = game.roll(user_id)
         if len(output.out) > 0:
             await update.message.reply_text(output.out)
         if len(output.warning) > 0:
