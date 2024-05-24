@@ -25,6 +25,7 @@ In a game
 - /roll to roll the dice
 - /buy to buy current property
 - /auction to put the property for auction
+- /bid <price> to make a bid in the auction
 - /rent to ask for rent payment
 - /trade to initiate a trade
 """)
@@ -63,6 +64,11 @@ class App(metaclass=Singleton):
         self.app.add_handler(CommandHandler("start", self.start_command))
         self.app.add_handler(CommandHandler("begin", self.begin_command))
         self.app.add_handler(CommandHandler("roll", self.roll_command))
+        self.app.add_handler(CommandHandler("buy", self.buy_command))
+        self.app.add_handler(CommandHandler("auction", self.buy_command))
+        self.app.add_handler(CommandHandler("bid", self.buy_command))
+        self.app.add_handler(CommandHandler("rent", self.buy_command))
+        self.app.add_handler(CommandHandler("trade", self.buy_command))
         self.app.add_handler(CommandHandler("help", help_))
         # The order matters
         self.app.add_handler(MessageHandler(filters.TEXT, echo))
@@ -148,14 +154,46 @@ class App(metaclass=Singleton):
             warnings.warn(output.warning)
 
     async def buy_command(self, update: Update, context: CallbackContext) -> None:
-        _chat_id: int = update.message.chat.id
-        _user_id: int = update.message.from_user.id
-        # TODO
+        chat_id: int = update.message.chat.id
+        user_id: int = update.message.from_user.id
+
+        game: Optional[Game] = self.games.get(chat_id, None)
+        if game is None:
+            return
+
+        output = game.buy(user_id)
+        if len(output.out) > 0:
+            await update.message.reply_text(output.out)
+        if len(output.warning) > 0:
+            warnings.warn(output.warning)
 
     async def auction_command(self, update: Update, context: CallbackContext) -> None:
-        _chat_id: int = update.message.chat.id
-        _user_id: int = update.message.from_user.id
-        # TODO
+        chat_id: int = update.message.chat.id
+        user_id: int = update.message.from_user.id
+
+        game: Optional[Game] = self.games.get(chat_id, None)
+        if game is None:
+            return
+
+        output = game.auction(user_id)
+        if len(output.out) > 0:
+            await update.message.reply_text(output.out)
+        if len(output.warning) > 0:
+            warnings.warn(output.warning)
+
+    async def bid_command(self, update: Update, context: CallbackContext) -> None:
+        chat_id: int = update.message.chat.id
+        user_id: int = update.message.from_user.id
+
+        game: Optional[Game] = self.games.get(chat_id, None)
+        if game is None:
+            return
+
+        output = game.bid(user_id)
+        if len(output.out) > 0:
+            await update.message.reply_text(output.out)
+        if len(output.warning) > 0:
+            warnings.warn(output.warning)
 
     async def rent_command(self, update: Update, context: CallbackContext) -> None:
         _chat_id: int = update.message.chat.id

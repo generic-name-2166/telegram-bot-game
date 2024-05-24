@@ -10,7 +10,10 @@ pub const BOARD: [Tile; 40] = [
         TileType::Street(Street::new(60, [4, 20, 60, 180, 320, 450])),
     ),
     Tile::new("Income Tax", TileType::TaxIncome),
-    Tile::new("Kings Cross Station", TileType::Railroad(Railroad(200))),
+    Tile::new(
+        "Kings Cross Station",
+        TileType::Railroad(Railroad::new(200)),
+    ),
     Tile::new(
         "The Angel, Islington",
         TileType::Street(Street::new(100, [6, 30, 90, 270, 400, 550])),
@@ -29,7 +32,7 @@ pub const BOARD: [Tile; 40] = [
         "Pall Mall",
         TileType::Street(Street::new(140, [10, 50, 150, 450, 625, 750])),
     ),
-    Tile::new("Electric Company", TileType::Utility(Utility(150))),
+    Tile::new("Electric Company", TileType::Utility(Utility::new(150))),
     Tile::new(
         "Whitehall",
         TileType::Street(Street::new(140, [10, 50, 150, 450, 625, 750])),
@@ -38,7 +41,7 @@ pub const BOARD: [Tile; 40] = [
         "Northumberland Avenue",
         TileType::Street(Street::new(160, [12, 60, 180, 500, 700, 900])),
     ),
-    Tile::new("Marylebone Station", TileType::Railroad(Railroad(200))),
+    Tile::new("Marylebone Station", TileType::Railroad(Railroad::new(200))),
     Tile::new(
         "Bow Street",
         TileType::Street(Street::new(180, [14, 70, 200, 550, 750, 950])),
@@ -66,7 +69,10 @@ pub const BOARD: [Tile; 40] = [
         "Trafalgar Square",
         TileType::Street(Street::new(220, [20, 100, 300, 750, 925, 1100])),
     ),
-    Tile::new("Fenchurch St Station", TileType::Railroad(Railroad(200))),
+    Tile::new(
+        "Fenchurch St Station",
+        TileType::Railroad(Railroad::new(200)),
+    ),
     Tile::new(
         "Leicester Square",
         TileType::Street(Street::new(260, [22, 110, 330, 800, 975, 1150])),
@@ -75,7 +81,7 @@ pub const BOARD: [Tile; 40] = [
         "Coventry Street",
         TileType::Street(Street::new(260, [22, 110, 330, 800, 975, 1150])),
     ),
-    Tile::new("Water Works", TileType::Utility(Utility(150))),
+    Tile::new("Water Works", TileType::Utility(Utility::new(150))),
     Tile::new(
         "Piccadilly",
         TileType::Street(Street::new(280, [24, 120, 360, 850, 1025, 1200])),
@@ -96,7 +102,7 @@ pub const BOARD: [Tile; 40] = [
     ),
     Tile::new(
         "Liverpool Street Station",
-        TileType::Railroad(Railroad(200)),
+        TileType::Railroad(Railroad::new(200)),
     ),
     Tile::new("Chance", TileType::Chance),
     Tile::new(
@@ -110,10 +116,14 @@ pub const BOARD: [Tile; 40] = [
     ),
 ];
 
+pub trait GetCost {
+    fn get_cost(&self) -> isize;
+}
+
 #[derive(Clone, Copy)]
 pub struct Street {
     rent_prices: [isize; 6],
-    cost: isize,
+    pub cost: isize,
 }
 
 impl Street {
@@ -122,12 +132,46 @@ impl Street {
     }
 }
 
+impl GetCost for Street {
+    fn get_cost(&self) -> isize {
+        self.cost
+    }
+}
+
 /// Cost
 #[derive(Clone, Copy)]
-pub struct Railroad(isize);
+pub struct Railroad {
+    cost: isize,
+}
+
+impl Railroad {
+    const fn new(cost: isize) -> Self {
+        Self { cost }
+    }
+}
+
+impl GetCost for Railroad {
+    fn get_cost(&self) -> isize {
+        self.cost
+    }
+}
 
 #[derive(Clone, Copy)]
-pub struct Utility(isize);
+pub struct Utility {
+    cost: isize,
+}
+
+impl Utility {
+    const fn new(cost: isize) -> Self {
+        Self { cost }
+    }
+}
+
+impl GetCost for Utility {
+    fn get_cost(&self) -> isize {
+        self.cost
+    }
+}
 
 #[derive(Clone, Copy)]
 pub enum TileType {
