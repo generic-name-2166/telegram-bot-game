@@ -16,10 +16,18 @@ from monopoly import Game
 
 
 async def help_(update: Update, context: CallbackContext) -> None:
-    await update.message.reply_text("""# List of commands
-- `/start` to enter a game
-- `/begin` to start a game with all the players who entered
-- `/help` to show a list of available commands""")
+    await update.message.reply_text("""List of commands
+- /start to enter a game
+- /begin to start a game with all the players who entered
+- /help to show a list of available commands
+
+In a game
+- /roll to roll the dice
+- /buy to buy current property
+- /auction to put the property for auction
+- /rent to ask for rent payment
+- /trade to initiate a trade
+""")
 
 
 async def echo(update: Update, context: CallbackContext) -> None:
@@ -54,7 +62,9 @@ class App(metaclass=Singleton):
 
         self.app.add_handler(CommandHandler("start", self.start_command))
         self.app.add_handler(CommandHandler("begin", self.begin_command))
+        self.app.add_handler(CommandHandler("roll", self.roll_command))
         self.app.add_handler(CommandHandler("help", help_))
+        # The order matters
         self.app.add_handler(MessageHandler(filters.TEXT, echo))
 
         self.games: dict[int, Game] = dict()
@@ -122,7 +132,7 @@ class App(metaclass=Singleton):
         else:
             print("Not enough people are ready")
 
-    async def roll(self, update: Update, context: CallbackContext) -> None:
+    async def roll_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.message.chat.id
         user_id: int = update.message.from_user.id
         # TODO debate having db connection here
@@ -132,3 +142,23 @@ class App(metaclass=Singleton):
             await update.message.reply_text(output.out)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
+
+    async def buy_command(self, update: Update, context: CallbackContext) -> None:
+        _chat_id: int = update.message.chat.id
+        _user_id: int = update.message.from_user.id
+        # TODO
+
+    async def auction_command(self, update: Update, context: CallbackContext) -> None:
+        _chat_id: int = update.message.chat.id
+        _user_id: int = update.message.from_user.id
+        # TODO
+
+    async def rent_command(self, update: Update, context: CallbackContext) -> None:
+        _chat_id: int = update.message.chat.id
+        _user_id: int = update.message.from_user.id
+        # TODO
+
+    async def trade_command(self, update: Update, context: CallbackContext) -> None:
+        _chat_id: int = update.message.chat.id
+        _user_id: int = update.message.from_user.id
+        # TODO
