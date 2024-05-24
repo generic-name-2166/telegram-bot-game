@@ -38,7 +38,7 @@ impl PyGame {
     fn bid(&mut self, caller_id: usize, price: isize) -> PoorResult {
         PoorResult::from(self.inner.bid(caller_id, price))
     }
-    fn get_status(&mut self) -> String {
+    fn get_status(&self) -> String {
         self.inner.get_status()
     }
 }

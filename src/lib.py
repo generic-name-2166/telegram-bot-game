@@ -28,6 +28,7 @@ In a game
 - /bid <price> to make a bid in the auction
 - /rent to ask for rent payment
 - /trade to initiate a trade
+- /status to see game's status
 """)
 
 
@@ -65,10 +66,11 @@ class App(metaclass=Singleton):
         self.app.add_handler(CommandHandler("begin", self.begin_command))
         self.app.add_handler(CommandHandler("roll", self.roll_command))
         self.app.add_handler(CommandHandler("buy", self.buy_command))
-        self.app.add_handler(CommandHandler("auction", self.buy_command))
-        self.app.add_handler(CommandHandler("bid", self.buy_command))
-        self.app.add_handler(CommandHandler("rent", self.buy_command))
-        self.app.add_handler(CommandHandler("trade", self.buy_command))
+        self.app.add_handler(CommandHandler("auction", self.auction_command))
+        self.app.add_handler(CommandHandler("bid", self.bid_command))
+        self.app.add_handler(CommandHandler("rent", self.rent_command))
+        self.app.add_handler(CommandHandler("trade", self.trade_command))
+        self.app.add_handler(CommandHandler("status", self.status_command))
         self.app.add_handler(CommandHandler("help", help_))
         # The order matters
         self.app.add_handler(MessageHandler(filters.TEXT, echo))
@@ -204,3 +206,12 @@ class App(metaclass=Singleton):
         _chat_id: int = update.message.chat.id
         _user_id: int = update.message.from_user.id
         # TODO
+
+    async def status_command(self, update: Update, context: CallbackContext) -> None:
+        chat_id: int = update.message.chat.id
+
+        game: Optional[Game] = self.games.get(chat_id, None)
+        if game is None:
+            return
+
+        await update.message.reply_text(game.get_status())
