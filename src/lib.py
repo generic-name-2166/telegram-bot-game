@@ -110,12 +110,12 @@ class App(metaclass=Singleton):
 
         user_id: int = update.message.from_user.id
         username: Optional[str] = update.message.from_user.username
-        user: dict[int, Optional[str]] = {chat_id: [(user_id, username)]}
+        user: tuple[int, Optional[str]] = (user_id, username)
 
         if self.ready.get(chat_id, None) is None:
-            self.ready[chat_id] = user
+            self.ready[chat_id] = [user]
         else:
-            self.ready[chat_id].update(user)
+            self.ready[chat_id].append(user)
 
         await update.message.reply_text("You have entered a game")
 
@@ -125,12 +125,12 @@ class App(metaclass=Singleton):
 
         # Check if there's already a game in progress
         # and that there are players ready to start
-        ready: list[tuple[int, Optional[str]]] = self.ready.get(chat_id, [])
+        ready_players: list[tuple[int, Optional[str]]] = self.ready.get(chat_id, [])
         game: Optional[Game] = self.games.get(chat_id, None)
 
-        if game is None and len(ready) > 0:
+        if game is None and len(ready_players) > 0:
             await update.message.reply_text("Beginning of the game")
-            game: Game = Game(ready)
+            game: Game = Game(ready_players)
             del self.ready[chat_id]
             self.games[chat_id] = game
         elif game is not None:
