@@ -7,23 +7,49 @@ from index import handler
 
 async def test() -> None:
     with open("secret.txt") as F:
-        body = F.readline().strip()
+        start = F.readline().strip()
+        begin = F.readline().strip()
+        roll = F.readline().strip()
         bot_token = F.readline().strip()
 
     os.environ["BOT_TOKEN"] = bot_token
 
-    test_msg = {
+    start_msg = {
         "messages": [
             {
                 "details": {
                     "message": {
-                        "body": body,
+                        "body": start,
                     }
                 }
             }
         ]
     }
-    await handler(test_msg, None)
+    begin_msg = {
+        "messages": [
+            {
+                "details": {
+                    "message": {
+                        "body": begin,
+                    }
+                }
+            }
+        ]
+    }
+    roll_msg = {
+        "messages": [
+            {
+                "details": {
+                    "message": {
+                        "body": roll,
+                    }
+                }
+            }
+        ]
+    }
+    await handler(start_msg, None)
+    await handler(begin_msg, None)
+    await handler(roll_msg, None)
 
 
 if __name__ == "__main__":
