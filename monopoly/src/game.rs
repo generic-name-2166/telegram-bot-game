@@ -18,7 +18,7 @@ enum Status {
     Buy,
     // Auction meaning waiting for all to submit their bids
     Auction,
-}
+}  // + NotReady in database
 
 /// Enum to mutate Player instance
 pub enum Change {
@@ -30,7 +30,8 @@ pub enum Change {
 pub struct Player {
     user_id: usize,
     username: Option<String>,
-    ownership: HashMap<usize, Vec<usize>>,
+    // tile id to number of houses built
+    ownership: HashMap<usize, usize>,
     pub position: usize,
     pub money: isize,
 }
