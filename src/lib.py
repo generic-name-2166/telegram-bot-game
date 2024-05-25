@@ -10,8 +10,10 @@ from telegram.ext import (
 )
 import warnings
 from dataclasses import dataclass
-from typing import Optional
+from psycopg import Connection
+from typing import Optional, Any
 
+from db import connect_to_db
 from monopoly import Game
 
 
@@ -56,6 +58,7 @@ class App(metaclass=Singleton):
     ready: dict[int, list[tuple[int, Optional[str]]]]
     # update.message.chat.id
     games: dict[int, Game]
+    db_conn: Connection
 
     def __init__(self) -> None:
         self.app: Application = (
@@ -77,30 +80,48 @@ class App(metaclass=Singleton):
 
         self.games: dict[int, Game] = dict()
         self.ready: dict[int, list[tuple[int, Optional[str]]]] = dict()
+
+        # A travesty that only is_initalized flag is holding back
+        self.db_conn: Connection = None
+
         self.is_initialized: bool = False
 
-    async def start(self) -> None:
+    async def start(self, context: Any) -> None:
         if self.is_initialized:
             return
         await self.app.initialize()
         await self.app.start()
+        
+        self.db_conn: Connection = connect_to_db(context)
 
         self.is_initialized = True
 
     async def stop(self) -> None:
         if not self.is_initialized:
             return
+
         await self.app.stop()
         await self.app.shutdown()
+
+        self.db_conn.close()
+
         self.is_initialized = False
 
     async def handle_update(self, body: dict) -> None:
+        if not self.is_initialized:
+            warnings.warn("Update without intialization")
+            return
+        
         try:
             update: Update = Update.de_json(body, bot=self.app.bot)
             await self.app.process_update(update)
         except BaseException as e:
-            warnings.warn(f"Exception occured {e}")
+            self.db_conn.rollback()
             await self.stop()
+            raise e
+        else:
+            pass
+            # self.db_conn.commit()
 
     async def start_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.message.chat_id

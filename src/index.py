@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 import json
 import warnings
 
@@ -24,13 +24,14 @@ def get_body(event: Optional[dict]) -> Optional[list[dict]]:
     return list(filter(lambda x: x is not None, map(parse_body, messages)))
 
 
-async def handler(event: Optional[dict], context: Optional[dict]) -> dict:
+async def handler(event: Optional[dict], context: Any) -> dict:
     bodies: Optional[list[dict]] = get_body(event)
     if bodies is not None:
         app: App = App()
-        await app.start()
+        await app.start(context)
         for body in bodies:
             await app.handle_update(body)
+        await app.stop()
     else:
         warnings.warn(f"Body is empty {bodies}")
     return {

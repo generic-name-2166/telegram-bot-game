@@ -14,7 +14,10 @@ dist/
 *.pyd
 *.so
 
+secret.py
 secret.txt
+*.pem
+*.crt
 
 .coverage
 htmlcov/

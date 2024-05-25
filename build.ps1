@@ -15,6 +15,7 @@ cp $linuxPath "build\monopoly.cpython-312-x86_64-linux-gnu.so"
 cp "src\__init__.py" build
 cp "src\lib.py" build
 cp "src\db.py" build
+cp "src\secret.py" build
 cp requirements.txt build
 
 cp $winPath "src\monopoly.pyd"
