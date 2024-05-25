@@ -10,3 +10,8 @@ crate-type = ["cdylib"]
 [dependencies]
 pyo3 = { version = "0.21", features = ["extension-module"] }
 rand = "0.8.5"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+panic = "abort"
