@@ -138,7 +138,7 @@ class App(metaclass=Singleton):
         elif game is not None:
             await update.message.reply_text("A game already in progress.")
         else:
-            print("Not enough people are ready")
+            await update.message.reply_text("Not enough people are ready")
 
     async def roll_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.message.chat.id

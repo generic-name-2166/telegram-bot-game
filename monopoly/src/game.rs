@@ -86,8 +86,7 @@ fn roll_dice() -> (usize, usize) {
 fn check_owner(players: &[Player], position: &usize) -> bool {
     players
         .iter()
-        .position(|player: &Player| -> bool { player.ownership.contains_key(position) })
-        .is_some()
+        .any(|player: &Player| -> bool { player.ownership.contains_key(position) })
 }
 
 fn find_owner<'game>(players: &'game [Player], position: &usize) -> Option<&'game Player> {
@@ -174,11 +173,11 @@ impl Game {
                 self.status = Status::Buy;
                 Change::None
             }
-            TileType::Railroad(_) => {
+            TileType::Railroad(_) if !has_owner => {
                 // TODO
                 Change::None
             }
-            TileType::Utility(_) => {
+            TileType::Utility(_) if !has_owner => {
                 // TODO
                 Change::None
             }
@@ -197,9 +196,12 @@ impl Game {
             // TODO bankruptcy
             TileType::TaxIncome => Change::TaxedIncome,
             TileType::TaxLuxury => Change::TaxedLuxury,
-            TileType::Street(_) | TileType::Free | TileType::JailVisit | TileType::Go => {
-                Change::None
-            }
+            TileType::Street(_)
+            | TileType::Railroad(_)
+            | TileType::Utility(_)
+            | TileType::Free
+            | TileType::JailVisit
+            | TileType::Go => Change::None,
         };
 
         self.players
