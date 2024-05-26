@@ -152,3 +152,20 @@ def roll_user(
             "user_id": user_id,
         },
     )
+
+
+def buy_user_sql() -> str:
+    with open(PARENT.joinpath("buy_user.sql")) as file:
+        query: str = file.read()
+    return query
+
+
+def buy_user(conn: Connection, chat_id: int, user_id: int, money: int) -> None:
+    conn.execute(
+        buy_user_sql(),
+        {
+            "money": money,
+            "chat_id": chat_id,
+            "user_id": user_id,
+        },
+    )

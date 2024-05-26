@@ -210,11 +210,14 @@ class App(metaclass=Singleton):
         if game is None:
             return
 
-        output = game.buy(user_id)
+        output, maybe_money = game.buy(user_id)
         if len(output.out) > 0:
             await update.message.reply_text(output.out)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
+        
+        if maybe_money is not None:
+            db.buy_user(self.db_conn, chat_id, user_id, maybe_money)
 
     async def auction_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.message.chat.id

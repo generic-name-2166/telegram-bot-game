@@ -286,10 +286,11 @@ impl Game {
 
         (output, Some((position, player.money)))
     }
-    pub fn buy(&mut self, caller_id: usize) -> PoorOut {
+    /// Returns result and money if successful
+    pub fn buy(&mut self, caller_id: usize) -> (PoorOut, Option<isize>) {
         if !matches!(self.status, Status::Buy) {
             // Do nothing if it's not the time to buy
-            return PoorOut::empty();
+            return (PoorOut::empty(), None);
         }
 
         let player: &Player = self
@@ -304,15 +305,15 @@ impl Game {
         // Is non-purchasable
         if player.user_id != caller_id {
             // Do nothing if it's not the caller's turn to buy
-            return PoorOut::empty();
+            return (PoorOut::empty(), None);
         } else if let Some(owner) = find_owner(&self.players, &player.position) {
-            return PoorOut::new(
+            return (PoorOut::new(
                 format!(
                     "This property is already owned by {}",
                     owner.username.as_deref().unwrap_or("None")
                 ),
                 String::new(),
-            );
+            ), None);
         }
 
         let tile: Tile = BOARD[player.position];
@@ -339,8 +340,10 @@ impl Game {
         };
         if success {
             self.status = Status::Roll;
+            (output, Some(player.money))
+        } else {
+            (output, None)
         }
-        output
     }
     pub fn auction(&mut self, caller_id: usize) -> PoorOut {
         if !matches!(self.status, Status::Buy) {
