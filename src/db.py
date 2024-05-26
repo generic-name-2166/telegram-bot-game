@@ -20,7 +20,7 @@ def select_sql() -> str:
 def connect_to_db(context: Any) -> Connection:
     # God knows what this context is
 
-    secrets: Path = Path("./secret.txt")
+    secrets: Path = PARENT.joinpath("secret.txt")
     if secrets.is_file():
         # Running locally
         params: dict = load_local()

@@ -30,6 +30,7 @@ In a game
 - /bid <price> to make a bid in the auction
 - /rent to ask for rent payment
 - /trade to initiate a trade
+- /finish to finish the game
 - /status to see game's status
 """)
 
@@ -67,14 +68,15 @@ class App(metaclass=Singleton):
 
         self.app.add_handler(CommandHandler("start", self.start_command))
         self.app.add_handler(CommandHandler("begin", self.begin_command))
+        self.app.add_handler(CommandHandler("help", help_))
         self.app.add_handler(CommandHandler("roll", self.roll_command))
         self.app.add_handler(CommandHandler("buy", self.buy_command))
         self.app.add_handler(CommandHandler("auction", self.auction_command))
         self.app.add_handler(CommandHandler("bid", self.bid_command))
         self.app.add_handler(CommandHandler("rent", self.rent_command))
         self.app.add_handler(CommandHandler("trade", self.trade_command))
+        self.app.add_handler(CommandHandler("finish", self.finish_command))
         self.app.add_handler(CommandHandler("status", self.status_command))
-        self.app.add_handler(CommandHandler("help", help_))
         # The order matters
         self.app.add_handler(MessageHandler(filters.TEXT, echo))
 
@@ -141,7 +143,7 @@ class App(metaclass=Singleton):
         self.db_sync(chat_id)
 
         if self.games.get(chat_id, None) is not None:
-            await update.message.reply_text("A game already in progress")
+            await update.message.reply_text("A game is already in progress")
             return
 
         user_id: int = update.message.from_user.id
@@ -170,7 +172,7 @@ class App(metaclass=Singleton):
             del self.ready[chat_id]
             self.games[chat_id] = game
         elif game is not None:
-            await update.message.reply_text("A game already in progress.")
+            await update.message.reply_text("A game is already in progress.")
         else:
             await update.message.reply_text("Not enough people are ready")
 
@@ -241,6 +243,12 @@ class App(metaclass=Singleton):
         # TODO
 
     async def trade_command(self, update: Update, context: CallbackContext) -> None:
+        chat_id: int = update.message.chat.id
+        _user_id: int = update.message.from_user.id
+        self.db_sync(chat_id)
+        # TODO
+
+    async def finish_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.message.chat.id
         _user_id: int = update.message.from_user.id
         self.db_sync(chat_id)
