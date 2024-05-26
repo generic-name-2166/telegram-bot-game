@@ -1,4 +1,5 @@
-use pyo3::pyclass;
+use pyo3::{pyclass, pymethods};
+use std::collections::HashMap;
 
 #[pyclass]
 pub struct PoorResult {
@@ -37,6 +38,12 @@ impl PoorOut {
 
         Self { out, warning }
     }
+    pub fn merge_out(self, rhs: &str) -> Self {
+        Self {
+            out: self.out + " \n" + rhs,
+            ..self
+        }
+    }
 }
 
 impl From<PoorOut> for PoorResult {
@@ -44,6 +51,30 @@ impl From<PoorOut> for PoorResult {
         Self {
             out: value.out,
             warning: value.warning,
+        }
+    }
+}
+
+pub type SerPlayer = (usize, Option<String>, HashMap<usize, u8>, usize, isize);
+
+#[pyclass]
+pub struct SerGame {
+    #[pyo3(get)]
+    current_player: usize,
+    #[pyo3(get)]
+    status: String,
+    #[pyo3(get)]
+    players: Vec<SerPlayer>,
+}
+
+#[pymethods]
+impl SerGame {
+    #[new]
+    pub const fn new(current_player: usize, status: String, players: Vec<SerPlayer>) -> Self {
+        Self {
+            current_player,
+            status,
+            players,
         }
     }
 }

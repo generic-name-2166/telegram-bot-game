@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use crate::{
     game::board::{GetCost, Tile, TileType, BOARD},
-    io::PoorOut,
+    io::{PoorOut, SerGame, SerPlayer},
 };
 
 /// Status is defined by waiting for the next action
@@ -18,7 +18,17 @@ enum Status {
     Buy,
     // Auction meaning waiting for all to submit their bids
     Auction,
-}  // + NotReady in database
+} // + NotReady in database
+
+impl Status {
+    fn serialize(&self) -> String {
+        match self {
+            Self::Buy => "buy".to_owned(),
+            Self::Roll => "roll".to_owned(),
+            Self::Auction => "auction".to_owned(),
+        }
+    }
+}
 
 /// Enum to mutate Player instance
 pub enum Change {
@@ -31,7 +41,7 @@ pub struct Player {
     user_id: usize,
     username: Option<String>,
     // tile id to number of houses built
-    ownership: HashMap<usize, usize>,
+    ownership: HashMap<usize, u8>,
     pub position: usize,
     pub money: isize,
 }
@@ -46,15 +56,34 @@ impl Player {
             position: 0,
         }
     }
-    pub fn change(&mut self, looped: bool, change: Change) {
-        if looped {
-            self.money += 200;
+    pub fn serialize(&self) -> SerPlayer {
+        (
+            self.user_id,
+            self.username.clone(),
+            self.ownership.clone(),
+            self.position,
+            self.money,
+        )
+    }
+    pub fn change(&mut self, move_to: usize, looped: bool, change: Change) -> Option<String> {
+        self.position = move_to;
+        match (change, looped) {
+            (Change::None, false) => None,
+            (Change::None, true) => {
+                self.money += 200;
+                Some(format!("Passed GO. \n{} in the bank", self.money,))
+            }
+            (Change::TaxedIncome, true) => Some(format!("Passed GO. \n{} in the bank", self.money)),
+            (Change::TaxedIncome, false) => {
+                self.money -= 200;
+                Some(format!("{} in the bank", self.money))
+            }
+            (Change::TaxedLuxury, _) => {
+                // Surely no one will ever pass GO and land on luxury tax at the same time
+                self.money -= 100;
+                Some(format!("{} in the bank", self.money))
+            }
         }
-        match change {
-            Change::None => {}
-            Change::TaxedIncome => self.money -= 200,
-            Change::TaxedLuxury => self.money -= 100,
-        };
     }
     pub fn try_buying(&mut self, name: &str, prop: impl GetCost) -> (PoorOut, bool) {
         let cost: isize = prop.get_cost();
@@ -114,6 +143,18 @@ impl Game {
             status: Status::Roll,
         }
     }
+    pub fn serialize(&self) -> SerGame {
+        // I could serialize into JSON or something in Rust but Python would have to deserialize anyway
+        // Performance losses all around
+        SerGame::new(
+            self.current_player,
+            self.status.serialize(),
+            self.players
+                .iter()
+                .map(Player::serialize)
+                .collect::<Vec<_>>(),
+        )
+    }
     pub fn roll(&mut self, caller_id: usize) -> PoorOut {
         if !matches!(self.status, Status::Roll) {
             // Do nothing if it's not the time to roll
@@ -150,14 +191,13 @@ impl Game {
 
         let landed_on: Tile = BOARD[position];
 
-        let output: PoorOut = PoorOut::new(
+        let mut output: PoorOut = PoorOut::new(
             format!(
-                "{:?} has rolled {} and {}. \nNow on {} with {} in the bank.",
+                "{:?} has rolled {} and {}, now on {}.",
                 player.username.as_deref().unwrap_or("None"),
                 roll_1,
                 roll_2,
                 landed_on.name,
-                player.money,
             ),
             String::new(),
         );
@@ -170,16 +210,31 @@ impl Game {
 
         // TODO
         let player_change: Change = match landed_on.inner {
-            TileType::Street(_) if !has_owner => {
+            TileType::Street(prop) if !has_owner => {
                 self.status = Status::Buy;
+                output = output.merge_out(&format!(
+                    "Buy for {} or start an auction. \n{} in the bank.",
+                    prop.get_cost(),
+                    player.money,
+                ));
                 Change::None
             }
-            TileType::Railroad(_) if !has_owner => {
-                // TODO
+            TileType::Railroad(prop) if !has_owner => {
+                self.status = Status::Buy;
+                output = output.merge_out(&format!(
+                    "Buy for {} or start an auction. \n{} in the bank.",
+                    prop.get_cost(),
+                    player.money,
+                ));
                 Change::None
             }
-            TileType::Utility(_) if !has_owner => {
-                // TODO
+            TileType::Utility(prop) if !has_owner => {
+                self.status = Status::Buy;
+                output = output.merge_out(&format!(
+                    "Buy for {} or start an auction. \n{} in the bank.",
+                    prop.get_cost(),
+                    player.money,
+                ));
                 Change::None
             }
             TileType::Chance => {
@@ -205,10 +260,14 @@ impl Game {
             | TileType::Go => Change::None,
         };
 
-        self.players
+        let change_out: Option<String> = self
+            .players
             .get_mut(self.current_player)
             .expect("pointers have been tracked accurately")
-            .change(looped, player_change);
+            .change(move_to, looped, player_change);
+        if let Some(trace) = change_out {
+            output = output.merge_out(&trace);
+        }
         self.current_player = next_player;
 
         output
@@ -287,7 +346,7 @@ impl Game {
         self.status = Status::Auction;
 
         PoorOut::new(
-            "Starting an auction. \nAt least one player must enter a bid".to_owned(),
+            "Starting an auction. \nAt least one player must bid".to_owned(),
             String::new(),
         )
     }
@@ -296,6 +355,7 @@ impl Game {
         PoorOut::empty()
     }
     pub fn get_status(&self) -> String {
+        // TODO more info
         let player: &Player = self
             .players
             .get(self.current_player)

@@ -16,6 +16,7 @@ dist/
 
 secret.py
 secret.txt
+secret.sql
 *.pem
 *.crt
 

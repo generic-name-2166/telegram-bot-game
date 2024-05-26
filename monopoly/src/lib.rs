@@ -1,17 +1,12 @@
 mod game;
 mod io;
 
-use io::PoorResult;
-use pyo3::prelude::{
-    pyclass, pyfunction, pymethods, pymodule, wrap_pyfunction, Bound, PyModule, PyResult,
+use pyo3::prelude::{pyclass, pymethods, pymodule, Bound, PyModule, PyResult};
+
+use crate::{
+    game::Game,
+    io::{PoorResult, SerGame},
 };
-
-use crate::game::Game;
-
-#[pyfunction]
-fn add(left: usize, right: usize) -> PyResult<String> {
-    Ok((left + right).to_string())
-}
 
 #[pyclass(name = "Game")]
 struct PyGame {
@@ -41,11 +36,15 @@ impl PyGame {
     fn get_status(&self) -> String {
         self.inner.get_status()
     }
+    fn serialize(&self) -> SerGame {
+        self.inner.serialize()
+    }
 }
 
 #[pymodule]
 fn monopoly(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(add, m)?)?;
     m.add_class::<PyGame>()?;
+    m.add_class::<PoorResult>()?;
+    m.add_class::<SerGame>()?;
     Ok(())
 }
