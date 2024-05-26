@@ -82,32 +82,21 @@ impl Player {
             money: player.4,
         }
     }
-    pub fn change(&mut self, move_to: usize, looped: bool, change: Change) -> Option<String> {
-        self.position = move_to;
+    pub fn change(&mut self, position: usize, looped: bool, change: Change) {
+        self.position = position;
         match (change, looped) {
-            (Change::None, false) => None,
-            (Change::None, true) => {
-                self.money += 200;
-                Some(format!("Passed GO. \n{} in the bank", self.money,))
-            }
-            (Change::TaxedIncome, true) => Some(format!("Passed GO. \n{} in the bank", self.money)),
-            (Change::TaxedIncome, false) => {
-                self.money -= 200;
-                Some(format!("{} in the bank", self.money))
-            }
-            (Change::TaxedLuxury, _) => {
-                // Surely no one will ever pass GO and land on luxury tax at the same time
-                self.money -= 100;
-                Some(format!("{} in the bank", self.money))
-            }
-        }
+            (Change::None, false) | (Change::TaxedIncome, true) => {}
+            (Change::None, true) => self.money += 200,
+            (Change::TaxedIncome, false) => self.money -= 200,
+            (Change::TaxedLuxury, _) => self.money -= 100,
+        };
     }
     pub fn try_buying(&mut self, name: &str, prop: impl GetCost) -> (PoorOut, bool) {
         let cost: isize = prop.get_cost();
         let (out, success) = if self.money < cost {
             (
                 format!(
-                    "Not enough money. \nYou have {}. {} costs {}",
+                    "Not enough money. \n{} in the bank. {} costs {}",
                     self.money, name, cost
                 ),
                 false,
@@ -115,7 +104,7 @@ impl Player {
         } else {
             self.money -= cost;
             (
-                format!("Purchased {}. \nYou have {} in the bank.", name, self.money),
+                format!("Purchased {}. \n{} in the bank.", name, self.money),
                 true,
             )
         };
@@ -179,10 +168,11 @@ impl Game {
             status: Status::deserialize(&game.status),
         }
     }
-    pub fn roll(&mut self, caller_id: usize) -> PoorOut {
+    /// Returns result and position, money if they changed
+    pub fn roll(&mut self, caller_id: usize) -> (PoorOut, Option<(usize, isize)>) {
         if !matches!(self.status, Status::Roll) {
             // Do nothing if it's not the time to roll
-            return PoorOut::empty();
+            return (PoorOut::empty(), None);
         }
 
         let player_count: usize = self.players.len();
@@ -200,7 +190,7 @@ impl Game {
 
         if player.user_id != caller_id {
             // Do nothing if it's not the callers turn to roll
-            return PoorOut::empty();
+            return (PoorOut::empty(), None);
         }
 
         let (roll_1, roll_2) = roll_dice();
@@ -227,7 +217,7 @@ impl Game {
         );
 
         if player.ownership.contains_key(&position) {
-            return output;
+            return (output, Some((position, player.money)));
         }
 
         let has_owner: bool = check_owner(&self.players, &position);
@@ -237,27 +227,24 @@ impl Game {
             TileType::Street(prop) if !has_owner => {
                 self.status = Status::Buy;
                 output = output.merge_out(&format!(
-                    "Buy for {} or start an auction. \n{} in the bank.",
+                    "Buy for {} or start an auction.",
                     prop.get_cost(),
-                    player.money,
                 ));
                 Change::None
             }
             TileType::Railroad(prop) if !has_owner => {
                 self.status = Status::Buy;
                 output = output.merge_out(&format!(
-                    "Buy for {} or start an auction. \n{} in the bank.",
+                    "Buy for {} or start an auction.",
                     prop.get_cost(),
-                    player.money,
                 ));
                 Change::None
             }
             TileType::Utility(prop) if !has_owner => {
                 self.status = Status::Buy;
                 output = output.merge_out(&format!(
-                    "Buy for {} or start an auction. \n{} in the bank.",
+                    "Buy for {} or start an auction.",
                     prop.get_cost(),
-                    player.money,
                 ));
                 Change::None
             }
@@ -284,17 +271,20 @@ impl Game {
             | TileType::Go => Change::None,
         };
 
-        let change_out: Option<String> = self
+        let player = self
             .players
             .get_mut(self.current_player)
-            .expect("pointers have been tracked accurately")
-            .change(move_to, looped, player_change);
-        if let Some(trace) = change_out {
-            output = output.merge_out(&trace);
-        }
+            .expect("pointers have been tracked accurately");
+
+        player.change(position, looped, player_change);
         self.current_player = next_player;
 
-        output
+        if looped {
+            output = output.merge_out("Passed GO.");
+        }
+        output = output.merge_out(&format!("{} in the bank.", player.money));
+
+        (output, Some((position, player.money)))
     }
     pub fn buy(&mut self, caller_id: usize) -> PoorOut {
         if !matches!(self.status, Status::Buy) {

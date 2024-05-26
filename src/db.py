@@ -74,12 +74,81 @@ def fetch_game(
     elif rows[0]["status"] is None:
         # Game not ready but there are ready players
         return [(row["user_id"], row["username"]) for row in rows]
-    else:
-        # Game in progress
-        current_player: int = rows[0]["current_player"]
-        status: str = rows[0]["status"]
-        players: list[tuple[int, Optional[str], dict[int, int], int, int]] = (
-            collect_players(rows)
+
+    # Game in progress
+    current_player: int = rows[0]["current_player"]
+    status: str = rows[0]["status"]
+    players: list[tuple[int, Optional[str], dict[int, int], int, int]] = (
+        collect_players(rows)
+    )
+    ser_game = SerGame(current_player, status, players)
+    return Game.deserialize(ser_game)
+
+
+def start_user_sql() -> str:
+    with open(PARENT.joinpath("start_user.sql")) as file:
+        query: str = file.read()
+    return query
+
+
+def add_user(
+    conn: Connection, chat_id: int, user_id: int, username: Optional[str]
+) -> None:
+    params = {
+        "chat_id": chat_id,
+        "user_id": user_id,
+        "position": -1,
+        "money": -1,
+        "username": username,
+    }
+    conn.execute(start_user_sql(), params)
+
+
+def begin_game_sql() -> str:
+    with open(PARENT.joinpath("begin_game.sql")) as file:
+        query: str = file.read()
+    return query
+
+
+def begin_user_sql() -> str:
+    with open(PARENT.joinpath("begin_user.sql")) as file:
+        query: str = file.read()
+    return query
+
+
+def begin_game(conn: Connection, chat_id: int, ready_ids: tuple[int]) -> None:
+    cursor = conn.execute(
+        begin_game_sql(),
+        (chat_id,),
+    )
+
+    query = begin_user_sql()
+
+    for user_id in ready_ids:
+        cursor.execute(
+            query,
+            {
+                "chat_id": chat_id,
+                "user_id": user_id,
+            },
         )
-        ser_game = SerGame(current_player, status, players)
-        return Game.deserialize(ser_game)
+
+
+def roll_user_sql() -> str:
+    with open(PARENT.joinpath("roll_user.sql")) as file:
+        query: str = file.read()
+    return query
+
+
+def roll_user(
+    conn: Connection, chat_id: int, user_id: int, position: int, money: int
+) -> None:
+    conn.execute(
+        roll_user_sql(),
+        {
+            "position": position,
+            "money": money,
+            "chat_id": chat_id,
+            "user_id": user_id,
+        },
+    )

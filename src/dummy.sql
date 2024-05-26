@@ -12,7 +12,7 @@ BEGIN
     INSERT INTO chat (chat_id, user_id, "position", money) 
     VALUES (this_chat, user_0, 0, 1500);
 
-    INSERT INTO chat  (chat_id, user_id, "position", money) 
+    INSERT INTO chat (chat_id, user_id, "position", money) 
     VALUES (this_chat, user_1, 0, 1500);
 
     INSERT INTO game (chat_id, status, current_player)

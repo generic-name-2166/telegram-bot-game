@@ -56,7 +56,7 @@ async def test_handler() -> None:
 
 def test_game() -> None:
     game = Game(((0, "Gaming"),))
-    output = game.roll(0)
+    output, _change = game.roll(0)
     print(output.out)
     print(output.warning)
 
@@ -75,7 +75,7 @@ def test_db() -> None:
     chat_0: int = 0
     maybe_game_0 = fetch_game(conn, chat_0)
     assert isinstance(maybe_game_0, Game)
-    output = maybe_game_0.roll(0)
+    output, _maybe_change = maybe_game_0.roll(0)
     print(output.out)
 
     chat_1: int = 1

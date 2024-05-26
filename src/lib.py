@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from psycopg import Connection
 from typing import Optional, Any
 
-from db import connect_to_db, fetch_game
+import db
 from monopoly import Game
 
 
@@ -94,7 +94,7 @@ class App(metaclass=Singleton):
         await self.app.initialize()
         await self.app.start()
 
-        self.db_conn: Connection = connect_to_db(context)
+        self.db_conn: Connection = db.connect_to_db(context)
 
         self.is_initialized = True
 
@@ -126,7 +126,7 @@ class App(metaclass=Singleton):
             # self.db_conn.commit()
 
     def db_sync(self, chat_id: int) -> None:
-        maybe_game: None | list[tuple[int, Optional[str]]] | Game = fetch_game(
+        maybe_game: None | list[tuple[int, Optional[str]]] | Game = db.fetch_game(
             self.db_conn, chat_id
         )
         if maybe_game is None:
@@ -139,10 +139,9 @@ class App(metaclass=Singleton):
 
     async def start_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.message.chat_id
-
         self.db_sync(chat_id)
 
-        if self.games.get(chat_id, None) is not None:
+        if chat_id in self.games.keys():
             await update.message.reply_text("A game is already in progress")
             return
 
@@ -150,12 +149,13 @@ class App(metaclass=Singleton):
         username: Optional[str] = update.message.from_user.username
         user: tuple[int, Optional[str]] = (user_id, username)
 
-        if self.ready.get(chat_id, None) is None:
+        if chat_id not in self.ready.keys():
             self.ready[chat_id] = [user]
         else:
             self.ready[chat_id].append(user)
 
         await update.message.reply_text("You have entered a game")
+        db.add_user(self.db_conn, chat_id, user_id, username)
 
     async def begin_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.message.chat.id
@@ -166,15 +166,18 @@ class App(metaclass=Singleton):
         ready_players: list[tuple[int, Optional[str]]] = self.ready.get(chat_id, [])
         game: Optional[Game] = self.games.get(chat_id, None)
 
-        if game is None and len(ready_players) > 0:
-            await update.message.reply_text("Beginning of the game")
-            game: Game = Game(ready_players)
-            del self.ready[chat_id]
-            self.games[chat_id] = game
+        if len(ready_players) <= 0:
+            await update.message.reply_text("Not enough people are ready")
+            return
         elif game is not None:
             await update.message.reply_text("A game is already in progress.")
-        else:
-            await update.message.reply_text("Not enough people are ready")
+            return
+
+        await update.message.reply_text("Beginning of the game")
+        game: Game = Game(ready_players)
+        self.games[chat_id] = game
+        db.begin_game(chat_id, tuple(map(lambda x: x[0], ready_players)))
+        del self.ready[chat_id]
 
     async def roll_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.message.chat.id
@@ -185,11 +188,18 @@ class App(metaclass=Singleton):
         if game is None:
             return
 
-        output = game.roll(user_id)
-        if len(output.out) > 0:
-            await update.message.reply_text(output.out)
+        output, maybe_change = game.roll(user_id)
+        if maybe_change is None:
+            # TODO change types to indicate this better
+            # No change
+            return
+
+        await update.message.reply_text(output.out)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
+
+        position, money = maybe_change
+        db.roll_user(self.db_conn, chat_id, user_id, position, money)
 
     async def buy_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.message.chat.id

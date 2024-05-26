@@ -9,6 +9,10 @@ pub struct PoorResult {
     warning: String,
 }
 
+pub fn pass_poor<T>((out, other): (PoorOut, T)) -> (PoorResult, T) {
+    (PoorResult::from(out), other)
+}
+
 pub struct PoorOut {
     pub out: String,
     pub warning: String,

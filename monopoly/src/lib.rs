@@ -5,7 +5,7 @@ use pyo3::prelude::{pyclass, pymethods, pymodule, Bound, PyModule, PyResult};
 
 use crate::{
     game::Game,
-    io::{PoorResult, SerGame},
+    io::{pass_poor, PoorResult, SerGame},
 };
 
 #[pyclass(name = "Game")]
@@ -21,8 +21,8 @@ impl PyGame {
             inner: Game::new(info),
         }
     }
-    fn roll(&mut self, caller_id: usize) -> PoorResult {
-        PoorResult::from(self.inner.roll(caller_id))
+    fn roll(&mut self, caller_id: usize) -> (PoorResult, Option<(usize, isize)>) {
+        pass_poor(self.inner.roll(caller_id))
     }
     fn buy(&mut self, caller_id: usize) -> PoorResult {
         PoorResult::from(self.inner.buy(caller_id))
