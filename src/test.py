@@ -74,10 +74,9 @@ def test_db() -> None:
     conn: Connection = connect_to_db(None)
     chat_0: int = 0
     maybe_game_0 = fetch_game(conn, chat_0)
-    assert isinstance(maybe_game_0, SerGame)
-    print(maybe_game_0.current_player)
-    print(maybe_game_0.status)
-    print(maybe_game_0.players)
+    assert isinstance(maybe_game_0, Game)
+    output = maybe_game_0.roll(0)
+    print(output.out)
 
     chat_1: int = 1
     maybe_game_1 = fetch_game(conn, chat_1)

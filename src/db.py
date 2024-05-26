@@ -82,5 +82,4 @@ def fetch_game(
             collect_players(rows)
         )
         ser_game = SerGame(current_player, status, players)
-        # TODO call deserialize
-        return ser_game
+        return Game.deserialize(ser_game)

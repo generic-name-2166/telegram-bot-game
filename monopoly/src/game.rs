@@ -28,6 +28,14 @@ impl Status {
             Self::Auction => "auction".to_owned(),
         }
     }
+    fn deserialize(status: &str) -> Self {
+        match status {
+            "roll" => Self::Roll,
+            "buy" => Self::Buy,
+            "auction" => Self::Auction,
+            _ => todo!(),
+        }
+    }
 }
 
 /// Enum to mutate Player instance
@@ -64,6 +72,15 @@ impl Player {
             self.position,
             self.money,
         )
+    }
+    pub fn deserialize(player: &SerPlayer) -> Self {
+        Self {
+            user_id: player.0,
+            username: player.1.clone(),
+            ownership: player.2.clone(),
+            position: player.3,
+            money: player.4,
+        }
     }
     pub fn change(&mut self, move_to: usize, looped: bool, change: Change) -> Option<String> {
         self.position = move_to;
@@ -154,6 +171,13 @@ impl Game {
                 .map(Player::serialize)
                 .collect::<Vec<_>>(),
         )
+    }
+    pub fn deserialize(game: &SerGame) -> Self {
+        Self {
+            current_player: game.current_player,
+            players: game.players.iter().map(Player::deserialize).collect(),
+            status: Status::deserialize(&game.status),
+        }
     }
     pub fn roll(&mut self, caller_id: usize) -> PoorOut {
         if !matches!(self.status, Status::Roll) {

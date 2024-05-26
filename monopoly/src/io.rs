@@ -60,11 +60,11 @@ pub type SerPlayer = (usize, Option<String>, HashMap<usize, u8>, usize, isize);
 #[pyclass]
 pub struct SerGame {
     #[pyo3(get)]
-    current_player: usize,
+    pub current_player: usize,
     #[pyo3(get)]
-    status: String,
+    pub status: String,
     #[pyo3(get)]
-    players: Vec<SerPlayer>,
+    pub players: Vec<SerPlayer>,
 }
 
 #[pymethods]

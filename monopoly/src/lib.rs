@@ -39,6 +39,12 @@ impl PyGame {
     fn serialize(&self) -> SerGame {
         self.inner.serialize()
     }
+    #[staticmethod]
+    fn deserialize(game: &SerGame) -> Self {
+        Self {
+            inner: Game::deserialize(game),
+        }
+    }
 }
 
 #[pymodule]

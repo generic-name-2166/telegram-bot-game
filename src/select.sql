@@ -1,6 +1,6 @@
 SELECT
  	-- chat.chat_id,
-	chat.player_id,
+	-- chat.player_id,
 	chat.user_id,
 	chat.position,
 	chat.money,
