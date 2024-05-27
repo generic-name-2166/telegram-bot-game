@@ -1,5 +1,5 @@
 import os
-from telegram import Update
+from telegram import Update, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -17,8 +17,21 @@ import db
 from monopoly import Game
 
 
-async def help_(update: Update, context: CallbackContext) -> None:
-    await update.message.reply_text("""List of commands
+async def reply(
+    update: Update, text: str, reply_markup: Optional[InlineKeyboardMarkup] = None
+) -> None:
+    if update.message:
+        await update.message.reply_text(text, reply_markup=reply_markup)
+    elif update.effective_chat:
+        await update.effective_chat.send_message(text, reply_markup=reply_markup)
+    else:
+        warnings.warn("No chat found for update")
+
+
+async def help_(update: Update, _context: CallbackContext) -> None:
+    await reply(
+        update,
+        """List of commands
 - /start to enter a game
 - /begin to start a game with all the players who entered
 - /help to show a list of available commands
@@ -32,7 +45,8 @@ In a game
 - /trade to initiate a trade
 - /finish to finish the game
 - /status to see game's status
-""")
+""",
+    )
 
 
 async def echo(update: Update, context: CallbackContext) -> None:
@@ -84,7 +98,7 @@ class App(metaclass=Singleton):
         self.ready: dict[int, list[tuple[int, Optional[str]]]] = dict()
 
         # A travesty that only is_initalized flag is holding back
-        self.db_conn: Connection = None
+        self.db_conn: Connection = None  # type: ignore
 
         self.is_initialized: bool = False
 
@@ -142,7 +156,7 @@ class App(metaclass=Singleton):
         self.db_sync(chat_id)
 
         if chat_id in self.games.keys():
-            await update.message.reply_text("A game is already in progress")
+            await reply(update, "A game is already in progress")
             return
 
         user_id: int = update.message.from_user.id
@@ -154,7 +168,7 @@ class App(metaclass=Singleton):
         else:
             self.ready[chat_id].append(user)
 
-        await update.message.reply_text("You have entered a game")
+        await reply(update, "You have entered a game")
         db.add_user(self.db_conn, chat_id, user_id, username)
 
     async def begin_command(self, update: Update, context: CallbackContext) -> None:
@@ -167,13 +181,13 @@ class App(metaclass=Singleton):
         game: Optional[Game] = self.games.get(chat_id, None)
 
         if len(ready_players) <= 0:
-            await update.message.reply_text("Not enough people are ready")
+            await reply(update, "Not enough people are ready")
             return
         elif game is not None:
-            await update.message.reply_text("A game is already in progress.")
+            await reply(update, "A game is already in progress.")
             return
 
-        await update.message.reply_text("Beginning of the game")
+        await reply(update, "Beginning of the game")
         game: Game = Game(ready_players)
         self.games[chat_id] = game
         db.begin_game(chat_id, tuple(map(lambda x: x[0], ready_players)))
@@ -194,7 +208,7 @@ class App(metaclass=Singleton):
             # No change
             return
 
-        await update.message.reply_text(output.out)
+        await reply(update, output.out)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
 
@@ -212,10 +226,10 @@ class App(metaclass=Singleton):
 
         output, maybe_money = game.buy(user_id)
         if len(output.out) > 0:
-            await update.message.reply_text(output.out)
+            await reply(update, output.out)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
-        
+
         if maybe_money is not None:
             db.buy_user(self.db_conn, chat_id, user_id, maybe_money)
 
@@ -230,7 +244,7 @@ class App(metaclass=Singleton):
 
         output = game.auction(user_id)
         if len(output.out) > 0:
-            await update.message.reply_text(output.out)
+            await reply(update, output.out)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
 
@@ -245,7 +259,7 @@ class App(metaclass=Singleton):
 
         output = game.bid(user_id)
         if len(output.out) > 0:
-            await update.message.reply_text(output.out)
+            await reply(update, output.out)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
 
@@ -275,4 +289,4 @@ class App(metaclass=Singleton):
         if game is None:
             return
 
-        await update.message.reply_text(game.get_status())
+        await reply(update, game.get_status())
