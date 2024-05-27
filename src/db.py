@@ -160,12 +160,15 @@ def buy_user_sql() -> str:
     return query
 
 
-def buy_user(conn: Connection, chat_id: int, user_id: int, money: int) -> None:
+def buy_user(
+    conn: Connection, chat_id: int, user_id: int, money: int, tile_id: int
+) -> None:
     conn.execute(
         buy_user_sql(),
         {
             "money": money,
             "chat_id": chat_id,
             "user_id": user_id,
+            "tile_id": tile_id,
         },
     )

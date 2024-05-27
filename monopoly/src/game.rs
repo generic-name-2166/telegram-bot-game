@@ -103,6 +103,7 @@ impl Player {
             )
         } else {
             self.money -= cost;
+            self.ownership.insert(self.position, 0);
             (
                 format!("Purchased {}. \n{} in the bank.", name, self.money),
                 true,
@@ -280,8 +281,8 @@ impl Game {
 
         (output, Some((position, player.money)))
     }
-    /// Returns result and money if successful
-    pub fn buy(&mut self, caller_id: usize) -> (PoorOut, Option<isize>) {
+    /// Returns result and money with tile_id if successful
+    pub fn buy(&mut self, caller_id: usize) -> (PoorOut, Option<(isize, usize)>) {
         if !matches!(self.status, Status::Buy) {
             // Do nothing if it's not the time to buy
             return (PoorOut::empty(), None);
@@ -337,7 +338,7 @@ impl Game {
         };
         if success {
             self.status = Status::Roll;
-            (output, Some(player.money))
+            (output, Some((player.money, player.position)))
         } else {
             (output, None)
         }

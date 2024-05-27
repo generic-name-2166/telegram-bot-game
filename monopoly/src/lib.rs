@@ -24,7 +24,7 @@ impl PyGame {
     fn roll(&mut self, caller_id: usize) -> (PoorResult, Option<(usize, isize)>) {
         pass_poor(self.inner.roll(caller_id))
     }
-    fn buy(&mut self, caller_id: usize) -> (PoorResult, Option<isize>) {
+    fn buy(&mut self, caller_id: usize) -> (PoorResult, Option<(isize, usize)>) {
         pass_poor(self.inner.buy(caller_id))
     }
     fn auction(&mut self, caller_id: usize) -> PoorResult {
