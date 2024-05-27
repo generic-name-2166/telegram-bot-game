@@ -33,8 +33,13 @@ INLINE_BUTTONS: dict[int, InlineKeyboardButton] = {
 }
 
 
+def match_button(command: int) -> tuple[InlineKeyboardButton]:
+    return INLINE_BUTTONS[command]
+
+
 def construct_keyboard(commands: tuple[int]) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(tuple(map(lambda x: INLINE_BUTTONS[x], commands)))
+    result = tuple(map(match_button, commands))
+    return InlineKeyboardMarkup.from_column(result)
 
 
 async def reply(
@@ -50,7 +55,7 @@ async def reply(
 
 async def help_(update: Update, _context: CallbackContext) -> None:
     keyboard = tuple(INLINE_BUTTONS.values())
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    reply_markup = InlineKeyboardMarkup.from_column(keyboard)
     text: str = """List of commands
 - /start to enter a game
 - /begin to start a game with all the players who entered
