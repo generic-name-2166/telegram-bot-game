@@ -1,9 +1,10 @@
 import os
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telegram.ext import (
     Application,
     ApplicationBuilder,
     CallbackContext,
+    CallbackQueryHandler,
     CommandHandler,
     MessageHandler,
     filters,
@@ -32,7 +33,8 @@ INLINE_BUTTONS: dict[int, InlineKeyboardButton] = {
 }
 
 
-def construct_keyboard()
+def construct_keyboard(commands: tuple[int]) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(tuple(map(lambda x: INLINE_BUTTONS[x], commands)))
 
 
 async def reply(
@@ -49,9 +51,7 @@ async def reply(
 async def help_(update: Update, _context: CallbackContext) -> None:
     keyboard = tuple(INLINE_BUTTONS.values())
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await reply(
-        update,
-        """List of commands
+    text: str = """List of commands
 - /start to enter a game
 - /begin to start a game with all the players who entered
 - /help to show a list of available commands
@@ -66,7 +66,7 @@ In a game
 - /finish to finish the game
 - /status to see game's status
 """
-    await update.message.reply_text(text, reply_markup=reply_markup)
+    await reply(update, text, reply_markup=reply_markup)
 
 
 async def echo(update: Update, context: CallbackContext) -> None:
@@ -111,6 +111,7 @@ class App(metaclass=Singleton):
         self.app.add_handler(CommandHandler("trade", self.trade_command))
         self.app.add_handler(CommandHandler("finish", self.finish_command))
         self.app.add_handler(CommandHandler("status", self.status_command))
+        self.app.add_handler(CallbackQueryHandler())
         # The order matters
         self.app.add_handler(MessageHandler(filters.TEXT, echo))
 
@@ -310,3 +311,33 @@ class App(metaclass=Singleton):
             return
 
         await reply(update, game.get_status())
+
+    async def query(self, update: Update, context: CallbackContext) -> None:
+        query: CallbackQuery = update.callback_query
+
+        command: str = query.data
+        if command == "1":
+            await self.start_command(update, context)
+        elif command == "2":
+            await self.begin_command(update, context)
+        elif command == "3":
+            await help_(update, context)
+        elif command == "4":
+            await self.roll_command(update, context)
+        elif command == "5":
+            await self.buy_command(update, context)
+        elif command == "6":
+            await self.auction_command(update, context)
+        elif command == "7":
+            await self.bid_command(update, context)
+        elif command == "8":
+            await self.rent_command(update, context)
+        elif command == "9":
+            await self.trade_command(update, context)
+        elif command == "10":
+            await self.finish_command(update, context)
+        elif command == "11":
+            await self.status_command(update, context)
+        # else should be unreachable
+
+        await query.answer()
