@@ -1,5 +1,5 @@
 import psycopg
-from psycopg import Connection
+from psycopg import Connection, sql
 from psycopg.rows import dict_row
 from pathlib import Path
 from typing import Any, Optional
@@ -148,16 +148,25 @@ def roll_user(
     money: int,
     status: str,
 ) -> None:
-    conn.execute(
-        roll_user_sql(),
-        {
-            "position": position,
-            "money": money,
-            "chat_id": chat_id,
-            "user_id": user_id,
-            "status": status,
-        },
+    # Have to do it inline because status is a string
+    query: sql.SQL = sql.SQL("""
+DO $$
+DECLARE 
+    status_0 varchar(10) := {status};
+BEGIN
+    UPDATE chat SET "position" = {position}, money = {money}
+    WHERE player_id = (
+        SELECT player_id FROM chat
+        WHERE user_id = {user_id} AND chat_id = {chat_id}
+    );
+
+    UPDATE game SET status = status_0
+    WHERE chat_id = {chat_id};
+END $$;
+""").format(
+        status=status, position=position, money=money, user_id=user_id, chat_id=chat_id
     )
+    conn.execute(query)
 
 
 def buy_user_sql() -> str:
