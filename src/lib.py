@@ -1,5 +1,5 @@
 import os
-from telegram import Update, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -17,6 +17,24 @@ import db
 from monopoly import Game
 
 
+INLINE_BUTTONS: dict[int, InlineKeyboardButton] = {
+    1: InlineKeyboardButton("start", callback_data="1"),
+    2: InlineKeyboardButton("begin", callback_data="2"),
+    3: InlineKeyboardButton("help", callback_data="3"),
+    4: InlineKeyboardButton("roll", callback_data="4"),
+    5: InlineKeyboardButton("buy", callback_data="5"),
+    6: InlineKeyboardButton("auction", callback_data="6"),
+    7: InlineKeyboardButton("bid", callback_data="7"),
+    8: InlineKeyboardButton("rent", callback_data="8"),
+    9: InlineKeyboardButton("trade", callback_data="9"),
+    10: InlineKeyboardButton("finish", callback_data="10"),
+    11: InlineKeyboardButton("status", callback_data="11"),
+}
+
+
+def construct_keyboard()
+
+
 async def reply(
     update: Update, text: str, reply_markup: Optional[InlineKeyboardMarkup] = None
 ) -> None:
@@ -29,6 +47,8 @@ async def reply(
 
 
 async def help_(update: Update, _context: CallbackContext) -> None:
+    keyboard = tuple(INLINE_BUTTONS.values())
+    reply_markup = InlineKeyboardMarkup(keyboard)
     await reply(
         update,
         """List of commands
@@ -45,8 +65,8 @@ In a game
 - /trade to initiate a trade
 - /finish to finish the game
 - /status to see game's status
-""",
-    )
+"""
+    await update.message.reply_text(text, reply_markup=reply_markup)
 
 
 async def echo(update: Update, context: CallbackContext) -> None:
