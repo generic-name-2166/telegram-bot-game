@@ -178,7 +178,7 @@ class App(metaclass=Singleton):
         self.games[chat_id] = maybe_game
 
     async def start_command(self, update: Update, context: CallbackContext) -> None:
-        chat_id: int = update.effective_chat_id
+        chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
 
         if chat_id in self.games.keys():
