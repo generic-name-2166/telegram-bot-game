@@ -111,7 +111,7 @@ class App(metaclass=Singleton):
         self.app.add_handler(CommandHandler("trade", self.trade_command))
         self.app.add_handler(CommandHandler("finish", self.finish_command))
         self.app.add_handler(CommandHandler("status", self.status_command))
-        self.app.add_handler(CallbackQueryHandler())
+        self.app.add_handler(CallbackQueryHandler(self.query))
         # The order matters
         self.app.add_handler(MessageHandler(filters.TEXT, echo))
 
