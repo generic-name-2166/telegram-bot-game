@@ -21,7 +21,7 @@ impl PyGame {
             inner: Game::new(info),
         }
     }
-    fn roll(&mut self, caller_id: usize) -> (PoorResult, Option<(usize, isize)>) {
+    fn roll(&mut self, caller_id: usize) -> (PoorResult, Option<(usize, isize, &'static str)>) {
         pass_poor(self.inner.roll(caller_id))
     }
     fn buy(&mut self, caller_id: usize) -> (PoorResult, Option<(isize, usize)>) {

@@ -21,13 +21,16 @@ enum Status {
 } // + NotReady in database
 
 impl Status {
-    fn serialize(&self) -> String {
+    fn stringify(&self) -> &'static str {
         match self {
-            Self::Buy => "buy".to_owned(),
-            Self::Roll => "roll".to_owned(),
-            Self::Auction => "auction".to_owned(),
+            Self::Buy => "buy",
+            Self::Roll => "roll",
+            Self::Auction => "auction",
         }
     }
+    fn serialize(&self) -> String {
+        self.stringify().to_owned()
+    }   
     fn deserialize(status: &str) -> Self {
         match status {
             "roll" => Self::Roll,
@@ -170,7 +173,7 @@ impl Game {
         }
     }
     /// Returns result and position, money if they changed
-    pub fn roll(&mut self, caller_id: usize) -> (PoorOut, Option<(usize, isize)>) {
+    pub fn roll(&mut self, caller_id: usize) -> (PoorOut, Option<(usize, isize, &'static str)>) {
         if !matches!(self.status, Status::Roll) {
             // Do nothing if it's not the time to roll
             return (PoorOut::empty(), None);
@@ -212,7 +215,7 @@ impl Game {
         );
 
         if player.ownership.contains_key(&position) {
-            return (output, Some((position, player.money)));
+            return (output, Some((position, player.money, "roll")));
         }
 
         let has_owner: bool = check_owner(&self.players, &position);
@@ -279,7 +282,7 @@ impl Game {
         }
         output = output.merge_out(&format!("{} in the bank.", player.money));
 
-        (output, Some((position, player.money)))
+        (output, Some((position, player.money, self.status.stringify())))
     }
     /// Returns result and money with tile_id if successful
     pub fn buy(&mut self, caller_id: usize) -> (PoorOut, Option<(isize, usize)>) {

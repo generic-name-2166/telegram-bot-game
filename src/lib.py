@@ -238,8 +238,8 @@ class App(metaclass=Singleton):
         if len(output.warning) > 0:
             warnings.warn(output.warning)
 
-        position, money = maybe_change
-        db.roll_user(self.db_conn, chat_id, user_id, position, money)
+        position, money, status = maybe_change
+        db.roll_user(self.db_conn, chat_id, user_id, position, money, status)
 
     async def buy_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.effective_chat.id
@@ -256,10 +256,10 @@ class App(metaclass=Singleton):
         if len(output.warning) > 0:
             warnings.warn(output.warning)
 
-        if maybe_purchase is not None:
-            money: int = maybe_purchase[0]
-            tile_id: int = maybe_purchase[1]
-            db.buy_user(self.db_conn, chat_id, user_id, money, tile_id)
+        if maybe_purchase is None:
+            return
+        money, tile_id = maybe_purchase
+        db.buy_user(self.db_conn, chat_id, user_id, money, tile_id)
 
     async def auction_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.effective_chat.id

@@ -141,7 +141,12 @@ def roll_user_sql() -> str:
 
 
 def roll_user(
-    conn: Connection, chat_id: int, user_id: int, position: int, money: int
+    conn: Connection,
+    chat_id: int,
+    user_id: int,
+    position: int,
+    money: int,
+    status: str,
 ) -> None:
     conn.execute(
         roll_user_sql(),
@@ -150,6 +155,7 @@ def roll_user(
             "money": money,
             "chat_id": chat_id,
             "user_id": user_id,
+            "status": status,
         },
     )
 
