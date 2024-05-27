@@ -94,9 +94,9 @@ class App(metaclass=Singleton):
     is_initialized: bool
     # A list of players that are ready per chat but aren't in a game
     # Remove upon entering a game
-    # tuple is update.message.from_user.id and update.message.from_user.username
+    # tuple is update.effective_user.id and update.effective_user.username
     ready: dict[int, list[tuple[int, Optional[str]]]]
-    # update.message.chat.id
+    # update.effective_chat.id
     games: dict[int, Game]
     db_conn: Connection
 
@@ -178,15 +178,15 @@ class App(metaclass=Singleton):
         self.games[chat_id] = maybe_game
 
     async def start_command(self, update: Update, context: CallbackContext) -> None:
-        chat_id: int = update.message.chat_id
+        chat_id: int = update.effective_chat_id
         self.db_sync(chat_id)
 
         if chat_id in self.games.keys():
             await reply(update, "A game is already in progress")
             return
 
-        user_id: int = update.message.from_user.id
-        username: Optional[str] = update.message.from_user.username
+        user_id: int = update.effective_user.id
+        username: Optional[str] = update.effective_user.username
         user: tuple[int, Optional[str]] = (user_id, username)
 
         if chat_id not in self.ready.keys():
@@ -198,7 +198,7 @@ class App(metaclass=Singleton):
         db.add_user(self.db_conn, chat_id, user_id, username)
 
     async def begin_command(self, update: Update, context: CallbackContext) -> None:
-        chat_id: int = update.message.chat.id
+        chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
 
         # Check if there's already a game in progress
@@ -220,8 +220,8 @@ class App(metaclass=Singleton):
         del self.ready[chat_id]
 
     async def roll_command(self, update: Update, context: CallbackContext) -> None:
-        chat_id: int = update.message.chat.id
-        user_id: int = update.message.from_user.id
+        chat_id: int = update.effective_chat.id
+        user_id: int = update.effective_user.id
         self.db_sync(chat_id)
 
         game: Optional[Game] = self.games.get(chat_id, None)
@@ -242,8 +242,8 @@ class App(metaclass=Singleton):
         db.roll_user(self.db_conn, chat_id, user_id, position, money)
 
     async def buy_command(self, update: Update, context: CallbackContext) -> None:
-        chat_id: int = update.message.chat.id
-        user_id: int = update.message.from_user.id
+        chat_id: int = update.effective_chat.id
+        user_id: int = update.effective_user.id
         self.db_sync(chat_id)
 
         game: Optional[Game] = self.games.get(chat_id, None)
@@ -260,8 +260,8 @@ class App(metaclass=Singleton):
             db.buy_user(self.db_conn, chat_id, user_id, maybe_money)
 
     async def auction_command(self, update: Update, context: CallbackContext) -> None:
-        chat_id: int = update.message.chat.id
-        user_id: int = update.message.from_user.id
+        chat_id: int = update.effective_chat.id
+        user_id: int = update.effective_user.id
         self.db_sync(chat_id)
 
         game: Optional[Game] = self.games.get(chat_id, None)
@@ -275,8 +275,8 @@ class App(metaclass=Singleton):
             warnings.warn(output.warning)
 
     async def bid_command(self, update: Update, context: CallbackContext) -> None:
-        chat_id: int = update.message.chat.id
-        user_id: int = update.message.from_user.id
+        chat_id: int = update.effective_chat.id
+        user_id: int = update.effective_user.id
         self.db_sync(chat_id)
 
         game: Optional[Game] = self.games.get(chat_id, None)
@@ -290,25 +290,25 @@ class App(metaclass=Singleton):
             warnings.warn(output.warning)
 
     async def rent_command(self, update: Update, context: CallbackContext) -> None:
-        chat_id: int = update.message.chat.id
-        _user_id: int = update.message.from_user.id
+        chat_id: int = update.effective_chat.id
+        _user_id: int = update.effective_user.id
         self.db_sync(chat_id)
         # TODO
 
     async def trade_command(self, update: Update, context: CallbackContext) -> None:
-        chat_id: int = update.message.chat.id
-        _user_id: int = update.message.from_user.id
+        chat_id: int = update.effective_chat.id
+        _user_id: int = update.effective_user.id
         self.db_sync(chat_id)
         # TODO
 
     async def finish_command(self, update: Update, context: CallbackContext) -> None:
-        chat_id: int = update.message.chat.id
-        _user_id: int = update.message.from_user.id
+        chat_id: int = update.effective_chat.id
+        _user_id: int = update.effective_user.id
         self.db_sync(chat_id)
         # TODO
 
     async def status_command(self, update: Update, context: CallbackContext) -> None:
-        chat_id: int = update.message.chat.id
+        chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
 
         game: Optional[Game] = self.games.get(chat_id, None)
