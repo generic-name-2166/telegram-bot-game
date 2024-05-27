@@ -14,6 +14,5 @@ BEGIN
     WHERE chat_id = %(chat_id)s;
 
     INSERT INTO player (player_id, tile_id, house_count)
-    VALUES (player_0, %(tile_id)s, 0)
-    ON CONFLICT UPDATE;
+    VALUES (player_0, %(tile_id)s, 0);
 END $$;
