@@ -220,26 +220,20 @@ impl Game {
         let player_change: Change = match landed_on.inner {
             TileType::Street(prop) if !has_owner => {
                 self.status = Status::Buy;
-                output = output.merge_out(&format!(
-                    "Buy for {} or start an auction.",
-                    prop.get_cost(),
-                ));
+                output =
+                    output.merge_out(&format!("Buy for {} or start an auction.", prop.get_cost()));
                 Change::None
             }
             TileType::Railroad(prop) if !has_owner => {
                 self.status = Status::Buy;
-                output = output.merge_out(&format!(
-                    "Buy for {} or start an auction.",
-                    prop.get_cost(),
-                ));
+                output =
+                    output.merge_out(&format!("Buy for {} or start an auction.", prop.get_cost()));
                 Change::None
             }
             TileType::Utility(prop) if !has_owner => {
                 self.status = Status::Buy;
-                output = output.merge_out(&format!(
-                    "Buy for {} or start an auction.",
-                    prop.get_cost(),
-                ));
+                output =
+                    output.merge_out(&format!("Buy for {} or start an auction.", prop.get_cost()));
                 Change::None
             }
             TileType::Chance => {
@@ -307,13 +301,16 @@ impl Game {
             // Do nothing if it's not the caller's turn to buy
             return (PoorOut::empty(), None);
         } else if let Some(owner) = find_owner(&self.players, &player.position) {
-            return (PoorOut::new(
-                format!(
-                    "This property is already owned by {}",
-                    owner.username.as_deref().unwrap_or("None")
+            return (
+                PoorOut::new(
+                    format!(
+                        "This property is already owned by {}",
+                        owner.username.as_deref().unwrap_or("None")
+                    ),
+                    String::new(),
                 ),
-                String::new(),
-            ), None);
+                None,
+            );
         }
 
         let tile: Tile = BOARD[player.position];
