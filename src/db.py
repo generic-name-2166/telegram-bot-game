@@ -8,7 +8,7 @@ from secret import load_cloud, load_local
 from monopoly import SerGame, Game
 
 
-PARENT: Path = Path(__file__).parent
+PARENT: Path = Path(__file__).resolve(strict=True).parent
 
 
 def select_sql() -> str:
