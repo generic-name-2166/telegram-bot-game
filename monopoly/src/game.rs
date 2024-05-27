@@ -182,12 +182,6 @@ impl Game {
             .get(self.current_player)
             .expect("pointers have been tracked accurately");
 
-        let next_player: usize = if self.current_player + 1 < player_count {
-            self.current_player + 1
-        } else {
-            0
-        };
-
         if player.user_id != caller_id {
             // Do nothing if it's not the callers turn to roll
             return (PoorOut::empty(), None);
@@ -277,7 +271,13 @@ impl Game {
             .expect("pointers have been tracked accurately");
 
         player.change(position, looped, player_change);
-        self.current_player = next_player;
+        if matches!(self.status, Status::Roll) {
+            self.current_player = if self.current_player + 1 < player_count {
+                self.current_player + 1
+            } else {
+                0
+            };
+        }
 
         if looped {
             output = output.merge_out("Passed GO.");
