@@ -16,6 +16,13 @@ cp "src\__init__.py" build
 cp "src\lib.py" build
 cp "src\db.py" build
 cp "src\secret.py" build
+cp "src\begin_game.sql" build
+cp "src\begin_user.sql" build
+cp "src\buy_user.sql" build
+cp "src\roll_user.sql" build
+cp "src\select.sql" build
+cp "src\start_user.sql" build
+
 cp requirements.txt build
 
 cp $winPath "src\monopoly.pyd"
