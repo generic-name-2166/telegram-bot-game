@@ -102,6 +102,7 @@ def add_user(
         "username": username,
     }
     conn.execute(start_user_sql(), params)
+    conn.commit()
 
 
 def begin_game_sql() -> str:
@@ -132,6 +133,7 @@ def begin_game(conn: Connection, chat_id: int, ready_ids: tuple[int]) -> None:
                 "user_id": user_id,
             },
         )
+    conn.commit()
 
 
 def roll_user_sql() -> str:
@@ -164,9 +166,15 @@ BEGIN
     WHERE chat_id = {chat_id};
 END $$;
 """).format(
-        status=status, position=position, money=money, user_id=user_id, chat_id=chat_id
+        status=status,
+        position=position,
+        money=money,
+        user_id=user_id,
+        chat_id=chat_id,
     )
-    conn.execute(query)
+    q: str = query.as_string(conn)
+    conn.execute(q)
+    conn.commit()
 
 
 def buy_user_sql() -> str:
@@ -187,3 +195,4 @@ def buy_user(
             "tile_id": tile_id,
         },
     )
+    conn.commit()
