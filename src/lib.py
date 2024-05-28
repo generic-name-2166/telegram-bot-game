@@ -79,6 +79,10 @@ async def echo(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text(update.message.text)
 
 
+def is_ready(ready: list[tuple[int, Optional[str]]], user_id: int) -> bool:
+    return user_id in {id_ for id_, _name in ready}
+
+
 class Singleton(type):
     _instances = {}
 
@@ -191,6 +195,9 @@ class App(metaclass=Singleton):
 
         if chat_id not in self.ready.keys():
             self.ready[chat_id] = [user]
+        elif is_ready(self.ready[chat_id], user_id):
+            # User is already registered
+            return
         else:
             self.ready[chat_id].append(user)
 
