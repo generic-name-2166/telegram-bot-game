@@ -85,23 +85,26 @@ def fetch_game(
     return Game.deserialize(ser_game)
 
 
-def start_user_sql() -> str:
-    with open(PARENT.joinpath("start_user.sql")) as file:
-        query: str = file.read()
-    return query
-
-
 def add_user(
     conn: Connection, chat_id: int, user_id: int, username: Optional[str]
 ) -> None:
-    params = {
-        "chat_id": chat_id,
-        "user_id": user_id,
-        "position": -1,
-        "money": -1,
-        "username": username,
-    }
-    conn.execute(start_user_sql(), params)
+    query: sql.SQL = sql.SQL("""DO $$
+BEGIN
+    INSERT INTO chat  (chat_id, user_id, "position", money) 
+    VALUES ({chat_id}, {user_id}, {position}, {money})
+    ON CONFLICT DO NOTHING;
+
+    INSERT INTO meta (user_id, username)
+    VALUES ({user_id}, {username})
+    ON CONFLICT DO NOTHING;
+END $$;""").format(
+        chat_id=chat_id,
+        user_id=user_id,
+        position=-1,
+        money=-1,
+        username=username,
+    )
+    conn.execute(query)
     conn.commit()
 
 

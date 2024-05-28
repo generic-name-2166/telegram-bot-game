@@ -19,7 +19,6 @@ cp "src\secret.py" build
 cp "src\begin_game.sql" build
 cp "src\begin_user.sql" build
 cp "src\select.sql" build
-cp "src\start_user.sql" build
 
 cp requirements.txt build
 

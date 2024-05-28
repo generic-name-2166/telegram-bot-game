@@ -216,7 +216,7 @@ class App(metaclass=Singleton):
         await reply(update, "Beginning of the game")
         game: Game = Game(ready_players)
         self.games[chat_id] = game
-        db.begin_game(chat_id, tuple(map(lambda x: x[0], ready_players)))
+        db.begin_game(self.db_conn, chat_id, tuple(map(lambda x: x[0], ready_players)))
         del self.ready[chat_id]
 
     async def roll_command(self, update: Update, context: CallbackContext) -> None:
@@ -319,6 +319,7 @@ class App(metaclass=Singleton):
 
         game: Optional[Game] = self.games.get(chat_id, None)
         if game is None:
+            await reply(update, "No game in progess")
             return
 
         await reply(update, game.get_status())
