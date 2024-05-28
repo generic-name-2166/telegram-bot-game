@@ -243,12 +243,14 @@ class App(metaclass=Singleton):
             # TODO change types to indicate this better
             # No change
             return
+        position, money, status = maybe_change
+        
+        keyboard = construct_keyboard((5 if status == "buy" else 4,))
 
-        await reply(update, output.out)
+        await reply(update, output.out, reply_markup=keyboard)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
 
-        position, money, status = maybe_change
         db.roll_user(self.db_conn, chat_id, user_id, position, money, status)
 
     async def buy_command(self, update: Update, context: CallbackContext) -> None:
@@ -261,13 +263,17 @@ class App(metaclass=Singleton):
             return
 
         output, maybe_purchase = game.buy(user_id)
-        if len(output.out) > 0:
-            await reply(update, output.out)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
 
+        if len(output.out) > 0 and maybe_purchase is None:
+            await reply(update, output.out)
+        elif len(output.out) > 0:
+            keyboard = construct_keyboard((4,))
+            await reply(update, output.out, reply_markup=keyboard)
+        
         if maybe_purchase is None:
-            return
+            return    
         money, tile_id = maybe_purchase
         db.buy_user(self.db_conn, chat_id, user_id, money, tile_id)
 
