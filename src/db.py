@@ -35,7 +35,13 @@ def connect_to_db(context: Any) -> Connection:
 def flatten_row(
     row: tuple[int, tuple[Optional[str], dict[int, int], int, int]],
 ) -> tuple[int, Optional[str], dict[int, int], int, int]:
-    return (row[0], *row[1])
+    result = (row[0], *row[1])
+    assert isinstance(result[0], int)
+    assert result[1] is None or isinstance(result[1], str)
+    assert isinstance(result[2], dict)
+    assert isinstance(result[3], int)
+    assert isinstance(result[4], int)
+    return result
 
 
 def collect_players(
@@ -44,12 +50,17 @@ def collect_players(
     players: dict[int, tuple[Optional[str], dict[int, int], int, int]] = dict()
     for row in rows:
         user_id: int = row["user_id"]
-        tile_id: int = row["tile_id"]
-        house_count: int = row["house_count"]
+        # Option -> case when player is registerd but owns nothing
+        tile_id: Optional[int] = row["tile_id"]
+        house_count: Optional[int] = row["house_count"]
 
         if user_id not in players.keys():
             username: Optional[str] = row["username"]
-            ownership: dict[int, int] = {tile_id: house_count}
+
+            ownership: dict[int, int] = (
+                {tile_id: house_count} if tile_id is not None else dict()
+            )
+
             position: int = row["position"]
             money: int = row["money"]
             players[user_id] = (username, ownership, position, money)
