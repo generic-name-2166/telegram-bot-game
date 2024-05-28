@@ -305,9 +305,13 @@ class App(metaclass=Singleton):
 
     async def finish_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.effective_chat.id
-        _user_id: int = update.effective_user.id
         self.db_sync(chat_id)
-        # TODO
+
+        maybe_ready = self.ready.pop(chat_id, None)
+        maybe_game = self.games.pop(chat_id, None)
+
+        if maybe_game or maybe_ready:
+            db.finish_game(chat_id)
 
     async def status_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.effective_chat.id

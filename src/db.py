@@ -196,3 +196,19 @@ def buy_user(
         },
     )
     conn.commit()
+
+
+def finish_game(conn: Connection, chat_id: int) -> None:
+    conn.execute(
+        """DO $$
+    BEGIN
+        DELETE FROM game WHERE chat_id = %(chat_id)s;
+
+        DELETE FROM player WHERE player_id IN (
+            DELETE FROM chat WHERE chat_id = %(chat_id)s
+            RETURNING player_id;
+        );
+    END $$;""",
+        {"chat_id": chat_id},
+    )
+    conn.commit()
