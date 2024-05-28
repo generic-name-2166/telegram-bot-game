@@ -201,7 +201,8 @@ class App(metaclass=Singleton):
         else:
             self.ready[chat_id].append(user)
 
-        await reply(update, "You have entered a game")
+        keyboard = construct_keyboard((2,))
+        await reply(update, "You have entered a game", reply_markup=keyboard)
         db.add_user(self.db_conn, chat_id, user_id, username)
 
     async def begin_command(self, update: Update, context: CallbackContext) -> None:
@@ -220,7 +221,9 @@ class App(metaclass=Singleton):
             await reply(update, "A game is already in progress.")
             return
 
-        await reply(update, "Beginning of the game")
+        keyboard = construct_keyboard((4,))
+        await reply(update, "Beginning of the game", reply_markup=keyboard)
+        
         game: Game = Game(ready_players)
         self.games[chat_id] = game
         db.begin_game(self.db_conn, chat_id, tuple(map(lambda x: x[0], ready_players)))
