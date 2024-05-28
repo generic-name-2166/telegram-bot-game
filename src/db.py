@@ -136,12 +136,6 @@ def begin_game(conn: Connection, chat_id: int, ready_ids: tuple[int]) -> None:
     conn.commit()
 
 
-def roll_user_sql() -> str:
-    with open(PARENT.joinpath("roll_user.sql")) as file:
-        query: str = file.read()
-    return query
-
-
 def roll_user(
     conn: Connection,
     chat_id: int,
@@ -151,8 +145,7 @@ def roll_user(
     status: str,
 ) -> None:
     # Have to do it inline because status is a string
-    query: sql.SQL = sql.SQL("""
-DO $$
+    query: sql.SQL = sql.SQL("""DO $$
 DECLARE 
     status_0 varchar(10) := {status};
 BEGIN
@@ -164,51 +157,54 @@ BEGIN
 
     UPDATE game SET status = status_0
     WHERE chat_id = {chat_id};
-END $$;
-""").format(
+END $$;""").format(
         status=status,
         position=position,
         money=money,
         user_id=user_id,
         chat_id=chat_id,
     )
-    q: str = query.as_string(conn)
-    conn.execute(q)
+    conn.execute(query)
     conn.commit()
-
-
-def buy_user_sql() -> str:
-    with open(PARENT.joinpath("buy_user.sql")) as file:
-        query: str = file.read()
-    return query
 
 
 def buy_user(
     conn: Connection, chat_id: int, user_id: int, money: int, tile_id: int
 ) -> None:
-    conn.execute(
-        buy_user_sql(),
-        {
-            "money": money,
-            "chat_id": chat_id,
-            "user_id": user_id,
-            "tile_id": tile_id,
-        },
-    )
+    query: sql.SQL = sql.SQL("""DO $$
+DECLARE
+    player_0 integer;
+BEGIN
+    player_0 := (
+        SELECT player_id FROM chat
+        WHERE user_id = {user_id} AND chat_id = {chat_id}
+    );
+
+    UPDATE chat SET money = {money}
+    WHERE player_id = player_0;
+
+    UPDATE game SET status = 'roll'
+    WHERE chat_id = {chat_id};
+
+    INSERT INTO player (player_id, tile_id, house_count)
+    VALUES (player_0, {tile_id}, 0);
+END $$;""").format(money=money, chat_id=chat_id, user_id=user_id, tile_id=tile_id)
+
+    conn.execute(query)
     conn.commit()
 
 
 def finish_game(conn: Connection, chat_id: int) -> None:
     conn.execute(
         """DO $$
-    BEGIN
-        DELETE FROM game WHERE chat_id = %(chat_id)s;
+BEGIN
+    DELETE FROM game WHERE chat_id = %(chat_id)s;
 
-        DELETE FROM player WHERE player_id IN (
-            DELETE FROM chat WHERE chat_id = %(chat_id)s
-            RETURNING player_id;
-        );
-    END $$;""",
+    DELETE FROM player WHERE player_id IN (
+        DELETE FROM chat WHERE chat_id = %(chat_id)s
+        RETURNING player_id;
+    );
+END $$;""",
         {"chat_id": chat_id},
     )
     conn.commit()
