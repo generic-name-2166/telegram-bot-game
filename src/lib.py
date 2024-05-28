@@ -318,7 +318,9 @@ class App(metaclass=Singleton):
         maybe_game = self.games.pop(chat_id, None)
 
         if maybe_game or maybe_ready:
-            db.finish_game(chat_id)
+            # Don't make request if there's nothing to delete
+            db.finish_game(self.db_conn, chat_id)
+        await reply(update, "Stopping")
 
     async def status_command(self, update: Update, context: CallbackContext) -> None:
         chat_id: int = update.effective_chat.id

@@ -209,16 +209,15 @@ END $$;""").format(money=money, chat_id=chat_id, user_id=user_id, tile_id=tile_i
 
 
 def finish_game(conn: Connection, chat_id: int) -> None:
-    conn.execute(
-        """DO $$
+    query: sql.SQL = sql.SQL("""DO $$
 BEGIN
-    DELETE FROM game WHERE chat_id = %(chat_id)s;
+    DELETE FROM game WHERE chat_id = {chat_id};
 
-    DELETE FROM player WHERE player_id IN (
-        DELETE FROM chat WHERE chat_id = %(chat_id)s
-        RETURNING player_id;
-    );
-END $$;""",
-        {"chat_id": chat_id},
-    )
+    DELETE FROM player USING chat 
+	WHERE player.player_id = chat.player_id AND chat.chat_id = {chat_id};
+
+	DELETE FROM chat WHERE chat_id = {chat_id};
+END $$;""").format(chat_id=chat_id)
+
+    conn.execute(query)
     conn.commit()
