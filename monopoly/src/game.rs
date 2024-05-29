@@ -5,7 +5,10 @@ use rand::{
     rngs::ThreadRng,
     thread_rng,
 };
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use crate::{
     game::board::{GetCost, Tile, TileType, BOARD},
@@ -115,6 +118,9 @@ impl Player {
 
         (PoorOut::new(out, String::new()), success)
     }
+    fn win_bid(&mut self, tile_id: usize) {
+        let _: Option<u8> = self.ownership.insert(tile_id, 0);
+    }
 }
 
 fn roll_dice() -> (usize, usize) {
@@ -135,10 +141,29 @@ fn find_owner<'game>(players: &'game [Player], position: &usize) -> Option<&'gam
         .find(|player: &&'game Player| -> bool { player.ownership.contains_key(position) })
 }
 
+fn find_by_id<'game>(players: &'game mut [Player], user_id: usize) -> Option<&'game mut Player> {
+    players
+        .iter_mut()
+        .find(|player: &&'game mut Player| player.user_id == user_id)
+}
+
+fn get_now_sec() -> usize {
+    let now = SystemTime::now();
+    usize::try_from(
+        now.duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_secs(),
+    )
+    .expect("No overflow from timestamp")
+}
+
 pub struct Game {
     current_player: usize,
     players: Vec<Player>,
     status: Status,
+    biggest_bid: isize, // 0 means None
+    bid_time_sec: usize,
+    bidder_id: usize,
 }
 
 impl Game {
@@ -151,6 +176,9 @@ impl Game {
             current_player: 0,
             players,
             status: Status::Roll,
+            biggest_bid: 0,
+            bid_time_sec: 0,
+            bidder_id: 0,
         }
     }
     pub fn serialize(&self) -> SerGame {
@@ -163,13 +191,42 @@ impl Game {
                 .iter()
                 .map(Player::serialize)
                 .collect::<Vec<_>>(),
+            self.biggest_bid,
+            self.bid_time_sec,
+            self.bidder_id,
         )
     }
     pub fn deserialize(game: &SerGame) -> Self {
+        let mut status: Status = Status::deserialize(&game.status);
+        let mut current_player: usize = game.current_player;
+        let mut players: Vec<Player> = game.players.iter().map(Player::deserialize).collect();
+        let bid_time_sec: usize = game.bid_time_sec;
+
+        if matches!(status, Status::Auction) && (get_now_sec() - bid_time_sec > 10) {
+            // 10 seconds passed, the biggest bid gets the purchase
+            status = Status::Roll;
+
+            let player: &Player = &players[current_player];
+            let tile_id: usize = player.position;
+
+            if current_player + 1 < players.len() {
+                current_player += 1;
+            } else {
+                current_player = 0;
+            }
+
+            let bidder: &mut Player =
+                find_by_id(&mut players, game.bidder_id).expect("bid won't allow invalid players");
+            bidder.win_bid(tile_id);
+        }
+
         Self {
-            current_player: game.current_player,
-            players: game.players.iter().map(Player::deserialize).collect(),
-            status: Status::deserialize(&game.status),
+            current_player,
+            players,
+            status,
+            biggest_bid: game.biggest_bid,
+            bid_time_sec,
+            bidder_id: game.bidder_id,
         }
     }
     /// Returns result and position, money if they changed
@@ -181,10 +238,7 @@ impl Game {
 
         let player_count: usize = self.players.len();
 
-        let player: &Player = self
-            .players
-            .get(self.current_player)
-            .expect("pointers have been tracked accurately");
+        let player: &Player = &self.players[self.current_player];
 
         if player.user_id != caller_id {
             // Do nothing if it's not the callers turn to roll
@@ -263,10 +317,7 @@ impl Game {
             | TileType::Go => Change::None,
         };
 
-        let player = self
-            .players
-            .get_mut(self.current_player)
-            .expect("pointers have been tracked accurately");
+        let player: &mut Player = &mut self.players[self.current_player];
 
         player.change(position, looped, player_change);
         if matches!(self.status, Status::Roll) {

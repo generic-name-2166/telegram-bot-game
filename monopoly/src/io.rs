@@ -69,16 +69,32 @@ pub struct SerGame {
     pub status: String,
     #[pyo3(get)]
     pub players: Vec<SerPlayer>,
+    #[pyo3(get)]
+    pub biggest_bid: isize,
+    #[pyo3(get)]
+    pub bid_time_sec: usize,
+    #[pyo3(get)]
+    pub bidder_id: usize,
 }
 
 #[pymethods]
 impl SerGame {
     #[new]
-    pub const fn new(current_player: usize, status: String, players: Vec<SerPlayer>) -> Self {
+    pub const fn new(
+        current_player: usize,
+        status: String,
+        players: Vec<SerPlayer>,
+        biggest_bid: isize,
+        bid_time_sec: usize,
+        bidder_id: usize,
+    ) -> Self {
         Self {
             current_player,
             status,
             players,
+            biggest_bid,
+            bid_time_sec,
+            bidder_id,
         }
     }
 }
