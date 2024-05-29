@@ -30,7 +30,7 @@ impl Status {
     }
     fn serialize(&self) -> String {
         self.stringify().to_owned()
-    }   
+    }
     fn deserialize(status: &str) -> Self {
         match status {
             "roll" => Self::Roll,
@@ -282,7 +282,10 @@ impl Game {
         }
         output = output.merge_out(&format!("{} in the bank.", player.money));
 
-        (output, Some((position, player.money, self.status.stringify())))
+        (
+            output,
+            Some((position, player.money, self.status.stringify())),
+        )
     }
     /// Returns result and money with tile_id if successful
     pub fn buy(&mut self, caller_id: usize) -> (PoorOut, Option<(isize, usize)>) {
@@ -392,5 +395,16 @@ impl Game {
             }
             Status::Auction => "Waiting for everyone to submit their bids in DM".to_owned(),
         }
+    }
+    pub fn get_position(&self, user_id: usize) -> usize {
+        let Some(player) = self
+            .players
+            .iter()
+            .find(|player: &&Player| player.user_id == user_id)
+        else {
+            // Return empty map if caller is not a player
+            return 101;
+        };
+        player.position
     }
 }

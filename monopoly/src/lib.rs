@@ -21,6 +21,15 @@ impl PyGame {
             inner: Game::new(info),
         }
     }
+    fn serialize(&self) -> SerGame {
+        self.inner.serialize()
+    }
+    #[staticmethod]
+    fn deserialize(game: &SerGame) -> Self {
+        Self {
+            inner: Game::deserialize(game),
+        }
+    }
     fn roll(&mut self, caller_id: usize) -> (PoorResult, Option<(usize, isize, &'static str)>) {
         pass_poor(self.inner.roll(caller_id))
     }
@@ -36,14 +45,8 @@ impl PyGame {
     fn get_status(&self) -> String {
         self.inner.get_status()
     }
-    fn serialize(&self) -> SerGame {
-        self.inner.serialize()
-    }
-    #[staticmethod]
-    fn deserialize(game: &SerGame) -> Self {
-        Self {
-            inner: Game::deserialize(game),
-        }
+    fn get_position(&self, user_id: usize) -> usize {
+        self.inner.get_position(user_id)
     }
 }
 

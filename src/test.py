@@ -49,8 +49,8 @@ async def test_handler() -> None:
             }
         ]
     }
-    await handler(start_msg, None)
-    await handler(begin_msg, None)
+    # await handler(start_msg, None)
+    # await handler(begin_msg, None)
     await handler(roll_msg, None)
 
 

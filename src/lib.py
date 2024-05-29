@@ -30,6 +30,52 @@ INLINE_BUTTONS: dict[int, InlineKeyboardButton] = {
     9: InlineKeyboardButton("trade", callback_data="9"),
     10: InlineKeyboardButton("finish", callback_data="10"),
     11: InlineKeyboardButton("status", callback_data="11"),
+    12: InlineKeyboardButton("map", callback_data="12"),
+}
+
+MAPS: dict[int, str] = {
+    0: "AgACAgIAAxkDAAICG2ZXcesdj44gCRfnxb_d7sUuAAFoDwACv90xGylbwEophxkgm9EeMAEAAwIAA3MAAzUE",
+    1: "AgACAgIAAxkDAAICHmZXcgfj1edBLLL00Jx_3-0yqUG7AALB3TEbKVvASvhU1aoZ5jKsAQADAgADcwADNQQ",
+    2: "AgACAgIAAxkDAAICIWZXchaZ2cmguZQWYbBtP4NqHGsPAALC3TEbKVvASsvO1Cu11hzXAQADAgADcwADNQQ",
+    3: "AgACAgIAAxkDAAICJGZXckYL4jwtTs09GR0mbXYT7fN8AALE3TEbKVvASptMp8CqQ-lGAQADAgADcwADNQQ",
+    4: "AgACAgIAAxkDAAICJ2ZXclNYWC6YW0xkQ__fXQjXE_M0AALF3TEbKVvASveR9VyqVqN1AQADAgADcwADNQQ",
+    5: "AgACAgIAAxkDAAICKmZXcmdawWmvEZ9Z9KAC-6DsCMv4AALH3TEbKVvAShPgBmza1fnWAQADAgADcwADNQQ",
+    6: "AgACAgIAAxkDAAICLWZXcne7eIKvOdv_3VBcwiH89VhDAALI3TEbKVvASoTOI4NJcd73AQADAgADcwADNQQ",
+    7: "AgACAgIAAxkDAAICMGZXc5sLNbKG0oN6z1prTtwstwcXAALY3TEbKVvASm5j6G85bmSqAQADAgADcwADNQQ",
+    8: "AgACAgIAAxkDAAICMWZXc7BOr6zfPf35PfDhbP1bxn46AALZ3TEbKVvASpW3nBDMXGB4AQADAgADcwADNQQ",
+    9: "AgACAgIAAxkDAAICMmZXc72P7eBCkLert8gr371gG_DgAALb3TEbKVvASjQTqr7WEmRKAQADAgADcwADNQQ",
+    10: "AgACAgIAAxkDAAICM2ZXc8Xkf_FoKAcAAdoMQzjn1nLB1AAC3N0xGylbwEo2ZJgh70Ky8AEAAwIAA3MAAzUE",
+    11: "AgACAgIAAxkDAAICNGZXc83BsNjjXbOqtECOnv2erQABJQAC3d0xGylbwEpBIAq0dVkQlAEAAwIAA3MAAzUE",
+    12: "AgACAgIAAxkDAAICNWZXc9Uj-rLSM3xy7Ta7MWXUk0kYAALe3TEbKVvASqwO3xFLCZFhAQADAgADcwADNQQ",
+    13: "AgACAgIAAxkDAAICNmZXc9sISBjt0kebQNzhxPoefqatAALf3TEbKVvASszGmzfgT53-AQADAgADcwADNQQ",
+    14: "AgACAgIAAxkDAAICN2ZXc-Zf2raRKeeLv05GoH-91nIKAALg3TEbKVvASmjTap8o-7hsAQADAgADcwADNQQ",
+    15: "AgACAgIAAxkDAAICOGZXc-zHznV0tyagsL5GiT8fG9AYAALh3TEbKVvASrTlpx71132jAQADAgADcwADNQQ",
+    16: "AgACAgIAAxkDAAICOWZXc_Oy8mR-MhNjZyoaiO1eQVN3AALl3TEbKVvASusmce34MXwPAQADAgADcwADNQQ",
+    17: "AgACAgIAAxkDAAICOmZXc_p9S7birpdFQWCyLPaBEu4eAALm3TEbKVvASlguVN946MGvAQADAgADcwADNQQ",
+    18: "AgACAgIAAxkDAAICO2ZXdCb6J4IFKqP2xX976V9if7LtAALn3TEbKVvASt0Snt4jz0Z1AQADAgADcwADNQQ",
+    19: "AgACAgIAAxkDAAICPGZXdC5kJGgg7XPAaWf5eB8B5JOUAALo3TEbKVvASoRLwrJH-Zl2AQADAgADcwADNQQ",
+    20: "AgACAgIAAxkDAAICPWZXdDYfl0NygMQ68dv47bxagAx7AALp3TEbKVvASkL7gjsKB36xAQADAgADcwADNQQ",
+    21: "AgACAgIAAxkDAAICPmZXdECIS9WjiCHtBA_StT25AAHcxgAC6t0xGylbwErypvdjgO3YUgEAAwIAA3MAAzUE",
+    22: "AgACAgIAAxkDAAICP2ZXdEaerNihk_WnBvG3kdeIefnvAALr3TEbKVvASr6QaJ2m7AJ-AQADAgADcwADNQQ",
+    23: "AgACAgIAAxkDAAICQGZXdF-8WnVhMoMCnpihbK0wZK05AALs3TEbKVvASqPuK4Cs4-gxAQADAgADcwADNQQ",
+    24: "AgACAgIAAxkDAAICQWZXdGWpm4sLQ1HX_gt7VlaZgOasAALt3TEbKVvAShM9U8Og1LsjAQADAgADcwADNQQ",
+    25: "AgACAgIAAxkDAAICQmZXdIIb35IuoMYoYfGPksTLzE-tAALu3TEbKVvASpMrLCtVFYVJAQADAgADcwADNQQ",
+    26: "AgACAgIAAxkDAAICQ2ZXdIlG6BQ1bmUR-wP5nz5MBHXEAALv3TEbKVvASphDf9o_oILmAQADAgADcwADNQQ",
+    27: "AgACAgIAAxkDAAICRGZXdI9OfSz4hL6aCjWnjK5tagxJAALw3TEbKVvASkqkJcepy593AQADAgADcwADNQQ",
+    28: "AgACAgIAAxkDAAICRWZXdJbqgTb5tPEhH80HJDwv3rBxAALx3TEbKVvASr28PRTK2yY5AQADAgADcwADNQQ",
+    29: "AgACAgIAAxkDAAICRmZXdJ3qWzVahmGux5oN5FpyMncOAALy3TEbKVvASj7TKLbaGO28AQADAgADcwADNQQ",
+    30: "AgACAgIAAxkDAAICR2ZXdKN3jxY8BOeE4wZMCylgeBZ0AALz3TEbKVvASt3unGwtr8yvAQADAgADcwADNQQ",
+    31: "AgACAgIAAxkDAAICSGZXdKprmDM_0u1LDI8o1fZFH6u2AAL03TEbKVvAStjDnWoN-IOLAQADAgADcwADNQQ",
+    32: "AgACAgIAAxkDAAICSWZXdLC6ZsZxLCHhCOv1mNbt3JBJAAL13TEbKVvASuL0IXX-6r4FAQADAgADcwADNQQ",
+    33: "AgACAgIAAxkDAAICSmZXdLbrdQLJdc2Sf491haCHkRpqAAL23TEbKVvASh7TDlK9nHKsAQADAgADcwADNQQ",
+    34: "AgACAgIAAxkDAAICS2ZXdL2hVLhGnV4wvl9V9xBl1cTPAAL33TEbKVvASvcVrS0k0Hs3AQADAgADcwADNQQ",
+    35: "AgACAgIAAxkDAAICTGZXdMJb861hjbH6MqazCSaYAaBiAAL43TEbKVvASs8bzmTEZPK_AQADAgADcwADNQQ",
+    36: "AgACAgIAAxkDAAICTWZXdMpPzOntbwo0GpIU8iUYGVy6AAL53TEbKVvASpd5xP3o0S_aAQADAgADcwADNQQ",
+    37: "AgACAgIAAxkDAAICTmZXdNCxEDOmjyGoQT9xD4zqngPUAAL73TEbKVvASmavE_qsAAHaQQEAAwIAA3MAAzUE",
+    38: "AgACAgIAAxkDAAICT2ZXdNeARfoYVrvwukYXsiwH9Oz5AAL83TEbKVvASh_5DLgtidLvAQADAgADcwADNQQ",
+    39: "AgACAgIAAxkDAAICUGZXdOKYJ_wpmYDkbomjspMyqwrFAAL93TEbKVvASmxWZ3ThfYLyAQADAgADcwADNQQ",
+    100: "AgACAgIAAxkDAAIB-2ZXHRJ_cAE0faxq-S7J7fY0dSGGAAKX4TEbKVu4Sl1ARUom521wAQADAgADcwADNQQ",
+    101: "AgACAgIAAxkDAAICFmZXaxlh4-V6-WLoXPgQISre49Y8AAJo3TEbKVvASkZLh9El0_ujAQADAgADcwADNQQ",
 }
 
 
@@ -70,6 +116,7 @@ In a game
 - /trade to initiate a trade
 - /finish to finish the game
 - /status to see game's status
+- /map to see the board and your position
 """
     await reply(update, text, reply_markup=reply_markup)
 
@@ -77,6 +124,11 @@ In a game
 async def echo(update: Update, context: CallbackContext) -> None:
     if update.message and update.message.text:
         await update.message.reply_text(update.message.text)
+
+
+# async def upload_photo(update: Update, context: CallbackContext) -> None:
+#     message = await update.effective_chat.send_photo("../assets/tile-39.png")
+#     print(message.photo[0].file_id)
 
 
 def is_ready(ready: list[tuple[int, Optional[str]]], user_id: int) -> bool:
@@ -120,6 +172,7 @@ class App(metaclass=Singleton):
         self.app.add_handler(CommandHandler("trade", self.trade_command))
         self.app.add_handler(CommandHandler("finish", self.finish_command))
         self.app.add_handler(CommandHandler("status", self.status_command))
+        self.app.add_handler(CommandHandler("map", self.map_command))
         self.app.add_handler(CallbackQueryHandler(self.query))
         # The order matters
         self.app.add_handler(MessageHandler(filters.TEXT, echo))
@@ -223,7 +276,7 @@ class App(metaclass=Singleton):
 
         keyboard = construct_keyboard((4,))
         await reply(update, "Beginning of the game", reply_markup=keyboard)
-        
+
         game: Game = Game(ready_players)
         self.games[chat_id] = game
         db.begin_game(self.db_conn, chat_id, tuple(map(lambda x: x[0], ready_players)))
@@ -244,8 +297,8 @@ class App(metaclass=Singleton):
             # No change
             return
         position, money, status = maybe_change
-        
-        keyboard = construct_keyboard((5 if status == "buy" else 4,))
+
+        keyboard = construct_keyboard((5, 6, 12) if status == "buy" else (4, 12))
 
         await reply(update, output.out, reply_markup=keyboard)
         if len(output.warning) > 0:
@@ -269,11 +322,11 @@ class App(metaclass=Singleton):
         if len(output.out) > 0 and maybe_purchase is None:
             await reply(update, output.out)
         elif len(output.out) > 0:
-            keyboard = construct_keyboard((4,))
+            keyboard = construct_keyboard((4, 12))
             await reply(update, output.out, reply_markup=keyboard)
-        
+
         if maybe_purchase is None:
-            return    
+            return
         money, tile_id = maybe_purchase
         db.buy_user(self.db_conn, chat_id, user_id, money, tile_id)
 
@@ -342,6 +395,22 @@ class App(metaclass=Singleton):
 
         await reply(update, game.get_status())
 
+    async def map_command(self, update: Update, context: CallbackContext) -> None:
+        # await upload_photo(update, context)
+        chat_id: int = update.effective_chat.id
+        self.db_sync(chat_id)
+
+        game: Optional[Game] = self.games.get(chat_id)
+
+        if game is None:
+            # Send empty map
+            await update.effective_chat.send_photo(MAPS[101])
+            return
+        # Send map with position of the caller
+        user_id: int = update.effective_user.id
+        position: int = game.get_position(user_id)
+        await update.effective_chat.send_photo(MAPS[position])
+
     async def query(self, update: Update, context: CallbackContext) -> None:
         query: CallbackQuery = update.callback_query
 
@@ -368,6 +437,8 @@ class App(metaclass=Singleton):
             await self.finish_command(update, context)
         elif command == "11":
             await self.status_command(update, context)
+        elif command == "12":
+            await self.map_command(update, context)
         # else should be unreachable
 
         await query.answer()

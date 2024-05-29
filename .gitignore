@@ -14,6 +14,8 @@ dist/
 *.pyd
 *.so
 
+assets/
+
 secret.py
 secret.txt
 secret.sql
