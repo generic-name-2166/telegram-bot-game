@@ -393,9 +393,24 @@ class App(metaclass=Singleton):
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         chat_id: int = update.effective_chat.id
-        _user_id: int = update.effective_user.id
+        user_id: int = update.effective_user.id
         self.db_sync(chat_id)
-        # TODO
+
+        game: Optional[Game] = self.games.get(chat_id, None)
+        if game is None:
+            return
+
+        output, maybe_rent = game.rent(user_id)
+        if len(output.out) > 0:
+            await reply(update, output.out)
+        if len(output.warning) > 0:
+            warnings.warn(output.warning)
+        if maybe_rent is None:
+            return
+        caller_money, rentee_id, rentee_money = maybe_rent
+        db.rent_chat(
+            self.db_conn, chat_id, user_id, caller_money, rentee_id, rentee_money
+        )
 
     async def trade_command(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE

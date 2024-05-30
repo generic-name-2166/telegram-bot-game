@@ -269,3 +269,34 @@ def bid_game(
 
     conn.execute(query)
     conn.commit()
+
+
+def rent_chat(
+    conn: Connection,
+    chat_id: int,
+    caller_id: int,
+    caller_money: int,
+    rentee_id: int,
+    rentee_money: int,
+) -> None:
+    query: sql.SQL = sql.SQL(
+        """DO $$
+    BEGIN
+        UPDATE chat
+        SET money = {caller_money}
+        WHERE chat_id = {chat_id} AND user_id = {caller_id};
+
+        UPDATE chat
+        SET money = {rentee_money}
+        WHERE chat_id = {chat_id} AND user_id = {rentee_id};
+    END $$;"""
+    ).format(
+        caller_money=caller_money,
+        chat_id=chat_id,
+        caller_id=caller_id,
+        rentee_money=rentee_money,
+        rentee_id=rentee_id,
+    )
+
+    conn.execute(query)
+    conn.commit()

@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-    game::board::{GetCost, Tile, TileType, BOARD},
+    game::board::{GetCost, Railroad, Tile, TileType, Utility, BOARD},
     io::{PoorOut, SerGame, SerPlayer},
 };
 
@@ -502,9 +502,17 @@ impl Game {
     pub fn rent(&mut self, caller_id: usize) -> (PoorOut, Option<(isize, usize, isize)>) {
         let rentee: &Player = &self.players[self.current_player];
         if rentee.user_id == caller_id {
-            return (PoorOut::new("Can't ask rent from yourself".to_owned(), String::new()), None);
+            return (
+                PoorOut::new("Can't ask rent from yourself".to_owned(), String::new()),
+                None,
+            );
         }
-        let Some(caller) = self.players.iter().find(|player| player.user_id == caller_id) else {
+        let Some((caller_order, caller)) = self
+            .players
+            .iter()
+            .enumerate()
+            .find(|(_order, player)| player.user_id == caller_id)
+        else {
             // check here if caller is even a player
             return (PoorOut::empty(), None);
         };
@@ -513,11 +521,33 @@ impl Game {
             return (PoorOut::empty(), None);
         };
         let property: Tile = BOARD[rentee.position];
-        let cost: isize = match property.inner {
+        let rent: isize = match property.inner {
             TileType::Street(prop) => prop.rent_prices[usize::from(house_count)],
-            TileType::Railroad(prop) => todo!()
+            TileType::Railroad(_) => Railroad::calculate_rent(caller),
+            TileType::Utility(_) => Utility::calculate_rent(caller),
+            TileType::Chance
+            | TileType::Chest
+            | TileType::Free
+            | TileType::Go
+            | TileType::GoToJail
+            | TileType::JailVisit
+            | TileType::TaxIncome
+            | TileType::TaxLuxury => unreachable!(),
         };
 
+        let caller_name: &str = caller.username.as_deref().unwrap_or("None");
+        let rentee_name: &str = rentee.username.as_deref().unwrap_or("None");
+        let out: String = format!(
+            "{} collected rent from {}. {} now has {}, {} now has {}.",
+            caller_name, rentee_name, caller_name, caller.money, rentee_name, rentee.money,
+        );
+        let result: Option<(isize, usize, isize)> =
+            Some((caller.money, rentee.user_id, rentee.money));
+
+        self.players[caller_order].money += rent;
+        self.players[self.current_player].money -= rent;
+
+        (PoorOut::new(out, String::new()), result)
     }
     pub fn get_status(&self) -> String {
         // TODO more info

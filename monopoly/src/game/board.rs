@@ -1,3 +1,5 @@
+use crate::game::{roll_dice, Player};
+
 pub const BOARD: [Tile; 40] = [
     Tile::new("GO", TileType::Go),
     Tile::new(
@@ -116,6 +118,9 @@ pub const BOARD: [Tile; 40] = [
     ),
 ];
 
+const RAILROADS: [usize; 4] = [5, 15, 25, 35];
+pub const UTILITIES: [usize; 2] = [12, 28];
+
 pub trait GetCost {
     fn get_cost(&self) -> isize;
 }
@@ -148,6 +153,23 @@ impl Railroad {
     const fn new(cost: isize) -> Self {
         Self { cost }
     }
+    pub fn calculate_rent(player: &Player) -> isize {
+        // The formula - 25 * (2 ^ ({railroad_count} - 1))
+        // Rust just requires u32 here for some reason
+        let exp: u32 = RAILROADS
+            .into_iter()
+            .map(|railroad_id| {
+                if player.ownership.contains_key(&railroad_id) {
+                    1
+                } else {
+                    0
+                }
+            })
+            .sum::<u32>()
+            - 1;
+
+        25 * 2_isize.pow(exp)
+    }
 }
 
 impl GetCost for Railroad {
@@ -164,6 +186,17 @@ pub struct Utility {
 impl Utility {
     const fn new(cost: isize) -> Self {
         Self { cost }
+    }
+    pub fn calculate_rent(player: &Player) -> isize {
+        let (roll_0, roll_1) = roll_dice();
+        let rolled: isize = isize::try_from(roll_0 + roll_1).expect("rolled overflowing integer");
+        if player.ownership.contains_key(&UTILITIES[0])
+            && player.ownership.contains_key(&UTILITIES[1])
+        {
+            rolled * 10
+        } else {
+            rolled * 4
+        }
     }
 }
 
