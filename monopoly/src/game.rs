@@ -120,6 +120,20 @@ impl Player {
     }
     fn win_bid(&mut self, tile_id: usize) {
         let _: Option<u8> = self.ownership.insert(tile_id, 0);
+        let cost = match BOARD[tile_id].inner {
+            TileType::Street(prop) => prop.get_cost(),
+            TileType::Railroad(prop) => prop.get_cost(),
+            TileType::Utility(prop) => prop.get_cost(),
+            TileType::Chance
+            | TileType::Chest
+            | TileType::Free
+            | TileType::Go
+            | TileType::GoToJail
+            | TileType::JailVisit
+            | TileType::TaxIncome
+            | TileType::TaxLuxury => unreachable!(),
+        };
+        self.money -= cost;
     }
 }
 
