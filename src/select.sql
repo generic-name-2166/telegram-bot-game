@@ -6,6 +6,9 @@ SELECT
 	chat.money,
 	game.status,
 	game.current_player,
+	game.biggest_bid, 
+	game.bid_time_sec,
+	game.bidder_id,
 	meta.username,
     player.tile_id,
 	player.house_count

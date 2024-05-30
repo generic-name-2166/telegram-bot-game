@@ -89,15 +89,19 @@ def fetch_game(
     # Game in progress
     current_player: int = rows[0]["current_player"]
     status: str = rows[0]["status"]
+    biggest_bid: int = rows[0]["biggest_bid"]
+    bid_time_sec: int = rows[0]["bid_time_sec"]
+    bidder_id: int = rows[0]["bidder_id"]
     players: list[tuple[int, Optional[str], dict[int, int], int, int]] = (
         collect_players(rows)
     )
-    ser_game = SerGame(current_player, status, players)
+    ser_game = SerGame(
+        current_player, status, players, biggest_bid, bid_time_sec, bidder_id
+    )
     game, maybe_auction = Game.deserialize(ser_game)
     if maybe_auction is None:
         return game
     # sync with db if auction ended
-    bidder_id: int = ser_game.bidder_id
     money, tile_id = maybe_auction
     buy_user(conn, chat_id, bidder_id, money, tile_id)
     return game

@@ -417,9 +417,29 @@ impl Game {
         }
 
         let player: &Player = &self.players[self.current_player];
+        let tile = BOARD[player.position];
         if player.user_id != caller_id {
             // Do nothing if it's not the caller's turn to start auctions
             return (PoorOut::empty(), None);
+        } else if let Some(owner) = find_owner(&self.players, &player.position) {
+            return (
+                PoorOut::new(
+                    format!(
+                        "This property is already owned by {}",
+                        owner.username.as_deref().unwrap_or("None")
+                    ),
+                    String::new(),
+                ),
+                None,
+            );
+        } else if !matches!(
+            tile.inner,
+            TileType::Street(_) | TileType::Railroad(_) | TileType::Utility(_)
+        ) {
+            return (
+                PoorOut::new("Non-purchasable tile".to_owned(), String::new()),
+                None,
+            );
         } else if player.money < 40 {
             return (
                 PoorOut::new(

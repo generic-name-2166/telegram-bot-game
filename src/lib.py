@@ -357,7 +357,7 @@ class App(metaclass=Singleton):
         if maybe_bid is None:
             return
         bid_time_sec: int = maybe_bid
-        db.auction_game(self.db_conn, chat_id, bid_time_sec)
+        db.auction_game(self.db_conn, chat_id, user_id, bid_time_sec)
 
     async def bid_command(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
