@@ -3,11 +3,11 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Callbac
 from telegram.ext import (
     Application,
     ApplicationBuilder,
-    CallbackContext,
     CallbackQueryHandler,
     CommandHandler,
     MessageHandler,
     filters,
+    ContextTypes,
 )
 import warnings
 from dataclasses import dataclass
@@ -79,7 +79,7 @@ MAPS: dict[int, str] = {
 }
 
 
-def match_button(command: int) -> tuple[InlineKeyboardButton]:
+def match_button(command: int) -> InlineKeyboardButton:
     return INLINE_BUTTONS[command]
 
 
@@ -99,7 +99,7 @@ async def reply(
         warnings.warn("No chat found for update")
 
 
-async def help_(update: Update, _context: CallbackContext) -> None:
+async def help_(update: Update, _context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = tuple(INLINE_BUTTONS.values())
     reply_markup = InlineKeyboardMarkup.from_column(keyboard)
     text: str = """List of commands
@@ -121,12 +121,12 @@ In a game
     await reply(update, text, reply_markup=reply_markup)
 
 
-async def echo(update: Update, context: CallbackContext) -> None:
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message and update.message.text:
         await update.message.reply_text(update.message.text)
 
 
-# async def upload_photo(update: Update, context: CallbackContext) -> None:
+# async def upload_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 #     message = await update.effective_chat.send_photo("../assets/tile-39.png")
 #     print(message.photo[0].file_id)
 
@@ -136,9 +136,9 @@ def is_ready(ready: list[tuple[int, Optional[str]]], user_id: int) -> bool:
 
 
 class Singleton(type):
-    _instances = {}
+    _instances: dict[Any, Any] = {}
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, *args: Any, **kwargs: Any):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
@@ -234,7 +234,9 @@ class App(metaclass=Singleton):
             return
         self.games[chat_id] = maybe_game
 
-    async def start_command(self, update: Update, context: CallbackContext) -> None:
+    async def start_command(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
 
@@ -258,7 +260,9 @@ class App(metaclass=Singleton):
         await reply(update, "You have entered a game", reply_markup=keyboard)
         db.add_user(self.db_conn, chat_id, user_id, username)
 
-    async def begin_command(self, update: Update, context: CallbackContext) -> None:
+    async def begin_command(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
 
@@ -282,7 +286,9 @@ class App(metaclass=Singleton):
         db.begin_game(self.db_conn, chat_id, tuple(map(lambda x: x[0], ready_players)))
         del self.ready[chat_id]
 
-    async def roll_command(self, update: Update, context: CallbackContext) -> None:
+    async def roll_command(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat_id: int = update.effective_chat.id
         user_id: int = update.effective_user.id
         self.db_sync(chat_id)
@@ -306,7 +312,9 @@ class App(metaclass=Singleton):
 
         db.roll_user(self.db_conn, chat_id, user_id, position, money, status)
 
-    async def buy_command(self, update: Update, context: CallbackContext) -> None:
+    async def buy_command(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat_id: int = update.effective_chat.id
         user_id: int = update.effective_user.id
         self.db_sync(chat_id)
@@ -330,7 +338,9 @@ class App(metaclass=Singleton):
         money, tile_id = maybe_purchase
         db.buy_user(self.db_conn, chat_id, user_id, money, tile_id)
 
-    async def auction_command(self, update: Update, context: CallbackContext) -> None:
+    async def auction_command(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat_id: int = update.effective_chat.id
         user_id: int = update.effective_user.id
         self.db_sync(chat_id)
@@ -339,13 +349,28 @@ class App(metaclass=Singleton):
         if game is None:
             return
 
-        output = game.auction(user_id)
+        output, maybe_bid = game.auction(user_id)
         if len(output.out) > 0:
             await reply(update, output.out)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
+        if maybe_bid is None:
+            return
+        bid_time_sec: int = maybe_bid
+        db.auction_game(self.db_conn, chat_id, bid_time_sec)
 
-    async def bid_command(self, update: Update, context: CallbackContext) -> None:
+    async def bid_command(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        if context.args is None or len(context.args) < 1:
+            await reply(update, "Enter a bid as integer")
+            return
+        try:
+            price: int = int(context.args[0])
+        except ValueError:
+            await reply(update, "Enter a bid as integer")
+            return
+
         chat_id: int = update.effective_chat.id
         user_id: int = update.effective_user.id
         self.db_sync(chat_id)
@@ -354,25 +379,35 @@ class App(metaclass=Singleton):
         if game is None:
             return
 
-        output = game.bid(user_id)
+        output, maybe_bid = game.bid(user_id, price)
         if len(output.out) > 0:
             await reply(update, output.out)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
+        if maybe_bid is None:
+            return
+        bid_time_sec: int = maybe_bid
+        db.bid_game(self.db_conn, chat_id, user_id, bid_time_sec, price)
 
-    async def rent_command(self, update: Update, context: CallbackContext) -> None:
+    async def rent_command(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat_id: int = update.effective_chat.id
         _user_id: int = update.effective_user.id
         self.db_sync(chat_id)
         # TODO
 
-    async def trade_command(self, update: Update, context: CallbackContext) -> None:
+    async def trade_command(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat_id: int = update.effective_chat.id
         _user_id: int = update.effective_user.id
         self.db_sync(chat_id)
         # TODO
 
-    async def finish_command(self, update: Update, context: CallbackContext) -> None:
+    async def finish_command(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
 
@@ -384,7 +419,9 @@ class App(metaclass=Singleton):
             db.finish_game(self.db_conn, chat_id)
         await reply(update, "Stopping")
 
-    async def status_command(self, update: Update, context: CallbackContext) -> None:
+    async def status_command(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
 
@@ -395,7 +432,9 @@ class App(metaclass=Singleton):
 
         await reply(update, game.get_status())
 
-    async def map_command(self, update: Update, context: CallbackContext) -> None:
+    async def map_command(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         # await upload_photo(update, context)
         chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
@@ -411,7 +450,7 @@ class App(metaclass=Singleton):
         position: int = game.get_position(user_id)
         await update.effective_chat.send_photo(MAPS[position])
 
-    async def query(self, update: Update, context: CallbackContext) -> None:
+    async def query(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         query: CallbackQuery = update.callback_query
 
         command: str = query.data

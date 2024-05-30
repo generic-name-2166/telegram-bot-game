@@ -228,3 +228,40 @@ END $$;""").format(chat_id=chat_id)
 
     conn.execute(query)
     conn.commit()
+
+
+def auction_game(
+    conn: Connection, chat_id: int, user_id: int, bid_time_sec: int
+) -> None:
+    query: sql.SQL = sql.SQL(
+        """
+UPDATE game 
+SET 
+    status = 'auction', 
+    biggest_bid = 40, 
+    bid_time_sec = {bid_time_sec}, 
+    bidder_id = {user_id}
+WHERE chat_id = {chat_id};
+"""
+    ).format(bid_time_sec=bid_time_sec, user_id=user_id, chat_id=chat_id)
+
+    conn.execute(query)
+    conn.commit()
+
+
+def bid_game(
+    conn: Connection, chat_id: int, user_id: int, bid_time_sec: int, price: int
+) -> None:
+    query: sql.SQL = sql.SQL(
+        """
+    UPDATE game
+    SET
+        biggest_bid = {price},
+        bid_time_sec = {bid_time_sec},
+        bidder_id = {user_id}
+    WHERE chat_id = {chat_id};
+"""
+    ).format(price=price, bid_time_sec=bid_time_sec, user_id=user_id, chat_id=chat_id)
+
+    conn.execute(query)
+    conn.commit()

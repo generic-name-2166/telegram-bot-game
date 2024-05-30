@@ -409,31 +409,60 @@ impl Game {
             (output, None)
         }
     }
-    pub fn auction(&mut self, caller_id: usize) -> PoorOut {
+    /// Returns Some(bid_time_sec) if auction starts successfully
+    pub fn auction(&mut self, caller_id: usize) -> (PoorOut, Option<usize>) {
         if !matches!(self.status, Status::Buy) {
             // Do nothing if it's not the time to start auctions
-            return PoorOut::empty();
+            return (PoorOut::empty(), None);
         }
 
-        let player: &Player = self
-            .players
-            .get(self.current_player)
-            .expect("pointers have been tracked accurately");
+        let player: &Player = &self.players[self.current_player];
         if player.user_id != caller_id {
             // Do nothing if it's not the caller's turn to start auctions
-            return PoorOut::empty();
+            return (PoorOut::empty(), None);
+        } else if player.money < 40 {
+            return (
+                PoorOut::new(
+                    "You don't have enough money to start a bid.".to_owned(),
+                    String::new(),
+                ),
+                None,
+            );
         }
 
         self.status = Status::Auction;
+        self.bidder_id = caller_id;
+        self.bid_time_sec = get_now_sec();
+        self.biggest_bid = 40;
 
-        PoorOut::new(
-            "Starting an auction. \nAt least one player must bid".to_owned(),
-            String::new(),
+        (
+            PoorOut::new(
+                "Starting an auction. Starting bid is 40. \n10 seconds to make a bid".to_owned(),
+                String::new(),
+            ),
+            Some(self.bid_time_sec),
         )
     }
-    pub fn bid(&mut self, _caller_id: usize, _price: isize) -> PoorOut {
-        // TODO
-        PoorOut::empty()
+    /// Returns Some(bid_time_sec) if bid is accepted
+    pub fn bid(&mut self, caller_id: usize, price: isize) -> (PoorOut, Option<usize>) {
+        if !matches!(self.status, Status::Auction) {
+            // Do nothing if it's not the time to make bids
+            return (PoorOut::empty(), None);
+        } else if self.biggest_bid >= price {
+            return (
+                PoorOut::new("Enter a bigger bid".to_owned(), String::new()),
+                None,
+            );
+        }
+
+        self.biggest_bid = price;
+        self.bidder_id = caller_id;
+        self.bid_time_sec = get_now_sec();
+
+        (
+            PoorOut::new(format!("Biggest bid {}", self.biggest_bid), String::new()),
+            Some(self.bid_time_sec),
+        )
     }
     pub fn get_status(&self) -> String {
         // TODO more info

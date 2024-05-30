@@ -35,11 +35,11 @@ impl PyGame {
     fn buy(&mut self, caller_id: usize) -> (PoorResult, Option<(isize, usize)>) {
         pass_poor(self.inner.buy(caller_id))
     }
-    fn auction(&mut self, caller_id: usize) -> PoorResult {
-        PoorResult::from(self.inner.auction(caller_id))
+    fn auction(&mut self, caller_id: usize) -> (PoorResult, Option<usize>) {
+        pass_poor(self.inner.auction(caller_id))
     }
-    fn bid(&mut self, caller_id: usize, price: isize) -> PoorResult {
-        PoorResult::from(self.inner.bid(caller_id, price))
+    fn bid(&mut self, caller_id: usize, price: isize) -> (PoorResult, Option<usize>) {
+        pass_poor(self.inner.bid(caller_id, price))
     }
     fn get_status(&self) -> String {
         self.inner.get_status()
