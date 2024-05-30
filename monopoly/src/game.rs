@@ -498,6 +498,27 @@ impl Game {
             Some(self.bid_time_sec),
         )
     }
+    /// Returns Some(caller.money, rentee.user_id, rentee.money) if successful
+    pub fn rent(&mut self, caller_id: usize) -> (PoorOut, Option<(isize, usize, isize)>) {
+        let rentee: &Player = &self.players[self.current_player];
+        if rentee.user_id == caller_id {
+            return (PoorOut::new("Can't ask rent from yourself".to_owned(), String::new()), None);
+        }
+        let Some(caller) = self.players.iter().find(|player| player.user_id == caller_id) else {
+            // check here if caller is even a player
+            return (PoorOut::empty(), None);
+        };
+        let Some(&house_count) = caller.ownership.get(&rentee.position) else {
+            // Caller isn't an owner
+            return (PoorOut::empty(), None);
+        };
+        let property: Tile = BOARD[rentee.position];
+        let cost: isize = match property.inner {
+            TileType::Street(prop) => prop.rent_prices[usize::from(house_count)],
+            TileType::Railroad(prop) => todo!()
+        };
+
+    }
     pub fn get_status(&self) -> String {
         // TODO more info
         let player: &Player = self

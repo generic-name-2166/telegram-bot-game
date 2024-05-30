@@ -41,6 +41,9 @@ impl PyGame {
     fn bid(&mut self, caller_id: usize, price: isize) -> (PoorResult, Option<usize>) {
         pass_poor(self.inner.bid(caller_id, price))
     }
+    fn rent(&mut self, caller_id: usize) -> (PoorResult, Option<(isize, usize, isize)>) {
+        pass_poor(self.inner.rent(caller_id))
+    }
     fn get_status(&self) -> String {
         self.inner.get_status()
     }

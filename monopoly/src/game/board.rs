@@ -122,7 +122,7 @@ pub trait GetCost {
 
 #[derive(Clone, Copy)]
 pub struct Street {
-    rent_prices: [isize; 6],
+    pub rent_prices: [isize; 6],
     pub cost: isize,
 }
 
