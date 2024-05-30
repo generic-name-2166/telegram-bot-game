@@ -93,7 +93,14 @@ def fetch_game(
         collect_players(rows)
     )
     ser_game = SerGame(current_player, status, players)
-    return Game.deserialize(ser_game)
+    game, maybe_auction = Game.deserialize(ser_game)
+    if maybe_auction is None:
+        return game
+    # sync with db if auction ended
+    bidder_id: int = ser_game.bidder_id
+    money, tile_id = maybe_auction
+    buy_user(conn, chat_id, bidder_id, money, tile_id)
+    return game
 
 
 def add_user(

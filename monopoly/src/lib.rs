@@ -25,10 +25,9 @@ impl PyGame {
         self.inner.serialize()
     }
     #[staticmethod]
-    fn deserialize(game: &SerGame) -> Self {
-        Self {
-            inner: Game::deserialize(game),
-        }
+    fn deserialize(game: &SerGame) -> (Self, Option<(isize, usize)>) {
+        let (inner, maybe_auction) = Game::deserialize(game);
+        (Self { inner }, maybe_auction)
     }
     fn roll(&mut self, caller_id: usize) -> (PoorResult, Option<(usize, isize, &'static str)>) {
         pass_poor(self.inner.roll(caller_id))

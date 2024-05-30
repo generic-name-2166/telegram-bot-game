@@ -196,38 +196,47 @@ impl Game {
             self.bidder_id,
         )
     }
-    pub fn deserialize(game: &SerGame) -> Self {
+    /// If an auction ends during deserialization, returns Some((money, tile_id))
+    /// bidder_id can be got from ser_game
+    pub fn deserialize(game: &SerGame) -> (Self, Option<(isize, usize)>) {
         let mut status: Status = Status::deserialize(&game.status);
         let mut current_player: usize = game.current_player;
         let mut players: Vec<Player> = game.players.iter().map(Player::deserialize).collect();
         let bid_time_sec: usize = game.bid_time_sec;
 
-        if matches!(status, Status::Auction) && (get_now_sec() - bid_time_sec > 10) {
-            // 10 seconds passed, the biggest bid gets the purchase
-            status = Status::Roll;
+        let maybe_auction: Option<(isize, usize)> = (matches!(status, Status::Auction)
+            && (get_now_sec() - bid_time_sec > 10))
+            .then(|| -> (isize, usize) {
+                // 10 seconds passed, the biggest bid gets the purchase
+                status = Status::Roll;
 
-            let player: &Player = &players[current_player];
-            let tile_id: usize = player.position;
+                let player: &Player = &players[current_player];
+                let tile_id: usize = player.position;
 
-            if current_player + 1 < players.len() {
-                current_player += 1;
-            } else {
-                current_player = 0;
-            }
+                if current_player + 1 < players.len() {
+                    current_player += 1;
+                } else {
+                    current_player = 0;
+                }
 
-            let bidder: &mut Player =
-                find_by_id(&mut players, game.bidder_id).expect("bid won't allow invalid players");
-            bidder.win_bid(tile_id);
-        }
+                let bidder: &mut Player = find_by_id(&mut players, game.bidder_id)
+                    .expect("bid won't allow invalid players");
+                bidder.win_bid(tile_id);
 
-        Self {
-            current_player,
-            players,
-            status,
-            biggest_bid: game.biggest_bid,
-            bid_time_sec,
-            bidder_id: game.bidder_id,
-        }
+                (bidder.money, tile_id)
+            });
+
+        (
+            Self {
+                current_player,
+                players,
+                status,
+                biggest_bid: game.biggest_bid,
+                bid_time_sec,
+                bidder_id: game.bidder_id,
+            },
+            maybe_auction,
+        )
     }
     /// Returns result and position, money if they changed
     pub fn roll(&mut self, caller_id: usize) -> (PoorOut, Option<(usize, isize, &'static str)>) {
