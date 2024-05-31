@@ -44,8 +44,8 @@ impl PyGame {
     fn rent(&mut self, caller_id: usize) -> (PoorResult, Option<(isize, usize, isize)>) {
         pass_poor(self.inner.rent(caller_id))
     }
-    fn get_status(&self) -> String {
-        self.inner.get_status()
+    fn get_status(&self, caller_id: usize) -> String {
+        self.inner.get_status(caller_id)
     }
     fn get_position(&self, user_id: usize) -> usize {
         self.inner.get_position(user_id)

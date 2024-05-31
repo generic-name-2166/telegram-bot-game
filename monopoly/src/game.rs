@@ -1,5 +1,7 @@
 mod board;
 
+use joinery::JoinableIterator;
+use lazy_format::lazy_format;
 use rand::{
     distributions::{Distribution, Uniform},
     rngs::ThreadRng,
@@ -7,6 +9,7 @@ use rand::{
 };
 use std::{
     collections::HashMap,
+    fmt::Display,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -155,10 +158,16 @@ fn find_owner<'game>(players: &'game [Player], position: &usize) -> Option<&'gam
         .find(|player: &&'game Player| -> bool { player.ownership.contains_key(position) })
 }
 
-fn find_by_id<'game>(players: &'game mut [Player], user_id: usize) -> Option<&'game mut Player> {
+fn find_by_id_mut(players: &mut [Player], user_id: usize) -> Option<&mut Player> {
     players
         .iter_mut()
-        .find(|player: &&'game mut Player| player.user_id == user_id)
+        .find(|player: &&mut Player| player.user_id == user_id)
+}
+
+fn find_by_id(players: &[Player], user_id: usize) -> Option<&Player> {
+    players
+        .iter()
+        .find(|player: &&Player| player.user_id == user_id)
 }
 
 fn get_now_sec() -> usize {
@@ -169,6 +178,12 @@ fn get_now_sec() -> usize {
             .as_secs(),
     )
     .expect("No overflow from timestamp")
+}
+
+fn format_ownership(row: (&usize, &u8)) -> impl Display {
+    let (&tile_id, &house_count) = row;
+    let name: &'static str = BOARD[tile_id].name;
+    lazy_format!("{tile_id}. {name} - {house_count} house(s)")
 }
 
 pub struct Game {
@@ -233,7 +248,7 @@ impl Game {
                     current_player = 0;
                 }
 
-                let bidder: &mut Player = find_by_id(&mut players, game.bidder_id)
+                let bidder: &mut Player = find_by_id_mut(&mut players, game.bidder_id)
                     .expect("bid won't allow invalid players");
                 bidder.win_bid(tile_id);
 
@@ -549,33 +564,46 @@ impl Game {
 
         (PoorOut::new(out, String::new()), result)
     }
-    pub fn get_status(&self) -> String {
-        // TODO more info
-        let player: &Player = self
-            .players
-            .get(self.current_player)
-            .expect("pointers have been tracked accurately");
+    pub fn get_status(&self, caller_id: usize) -> String {
+        let player: &Player = &self.players[self.current_player];
 
-        match self.status {
+        let game_status: String = match self.status {
             Status::Roll => {
                 "Waiting for ".to_owned()
                     + player.username.as_deref().unwrap_or("None")
-                    + " to roll the dice"
+                    + " to roll the dice."
             }
             Status::Buy => {
                 "Waiting for ".to_owned()
                     + player.username.as_deref().unwrap_or("None")
-                    + " to buy or auction off a property"
+                    + " to buy or auction off a property."
             }
-            Status::Auction => "Waiting for everyone to submit their bids in DM".to_owned(),
+            Status::Auction => "Waiting for bid submissions.".to_owned(),
+        };
+
+        let Some(caller) = find_by_id(&self.players, caller_id) else {
+            return game_status;
+        };
+
+        if caller.ownership.is_empty() {
+            return game_status;
         }
+
+        let caller_status = caller
+            .ownership
+            .iter()
+            .map(format_ownership)
+            .join_with('\n');
+
+        format!(
+            "{}\n{} owns:\n{}",
+            game_status,
+            caller.username.as_deref().unwrap_or("None"),
+            caller_status,
+        )
     }
     pub fn get_position(&self, user_id: usize) -> usize {
-        let Some(player) = self
-            .players
-            .iter()
-            .find(|player: &&Player| player.user_id == user_id)
-        else {
+        let Some(player) = find_by_id(&self.players, user_id) else {
             // Return empty map if caller is not a player
             return 101;
         };

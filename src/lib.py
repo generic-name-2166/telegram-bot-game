@@ -435,7 +435,7 @@ class App(metaclass=Singleton):
         await reply(update, "Stopping")
 
     async def status_command(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+        self, update: Update, _context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
@@ -445,7 +445,8 @@ class App(metaclass=Singleton):
             await reply(update, "No game in progess")
             return
 
-        await reply(update, game.get_status())
+        user_id: int = update.effective_user.id
+        await reply(update, game.get_status(user_id))
 
     async def map_command(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
