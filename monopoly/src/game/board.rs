@@ -119,7 +119,27 @@ pub const BOARD: [Tile; 40] = [
 ];
 
 const RAILROADS: [usize; 4] = [5, 15, 25, 35];
-pub const UTILITIES: [usize; 2] = [12, 28];
+const UTILITIES: [usize; 2] = [12, 28];
+
+pub const COLOUR_BROWN: [usize; 2] = [1, 3];
+pub const COLOUR_LIGHT_BLUE: [usize; 3] = [6, 8, 9];
+pub const COLOUR_PINK: [usize; 3] = [11, 14, 15];
+pub const COLOUR_ORANGE: [usize; 3] = [16, 18, 19];
+pub const COLOUR_RED: [usize; 3] = [21, 23, 24];
+pub const COLOUR_YELLOW: [usize; 3] = [26, 27, 29];
+pub const COLOUR_GREEN: [usize; 3] = [31, 32, 34];
+pub const COLOUR_DARK_BLUE: [usize; 2] = [37, 39];
+
+pub enum Colour {
+    Brown,
+    LightBlue,
+    Pink,
+    Orange,
+    Red,
+    Yellow,
+    Green,
+    DarkBlue,
+}
 
 pub trait GetCost {
     fn get_cost(&self) -> isize;

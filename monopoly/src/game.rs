@@ -14,7 +14,10 @@ use std::{
 };
 
 use crate::{
-    game::board::{GetCost, Railroad, Tile, TileType, Utility, BOARD},
+    game::board::{
+        Colour, GetCost, Railroad, Tile, TileType, Utility, BOARD, COLOUR_BROWN, COLOUR_DARK_BLUE,
+        COLOUR_GREEN, COLOUR_LIGHT_BLUE, COLOUR_ORANGE, COLOUR_PINK, COLOUR_RED, COLOUR_YELLOW,
+    },
     io::{PoorOut, SerGame, SerPlayer},
 };
 
@@ -609,8 +612,99 @@ impl Game {
         };
         player.position
     }
-    /// If successfull, returns Some((caller.money, tile_id))
-    pub fn build(&mut self, user_id: usize) -> (PoorOut, Option<(isize, usize)>) {
+    /// If successfull, returns Some(caller.money)
+    pub fn build(&mut self, user_id: usize, tile_id: usize) -> (PoorOut, Option<isize>) {
+        let tile: Tile = BOARD[tile_id];
+        let Some(player) = find_by_id_mut(&mut self.players, user_id) else {
+            // Not a player
+            return (PoorOut::empty(), None);
+        };
 
+        let Some(&house_count) = player.ownership.get(&tile_id) else {
+            let out: String = "You don't own ".to_owned() + tile.name;
+            return (PoorOut::new(out, String::new()), None);
+        };
+
+        if !matches!(tile.inner, TileType::Street(_)) {
+            let out: String = "Can't build houses on ".to_owned() + tile.name;
+            return (PoorOut::new(out, String::new()), None);
+        } else if house_count == 5 {
+            let out: String = "Can't build any more on ".to_owned() + tile.name;
+            return (PoorOut::new(out, String::new()), None);
+        }
+
+        let (colour, price): (Colour, isize) = match tile_id {
+            1 | 3 => (Colour::Brown, 100),
+            6 | 8 | 9 => (Colour::LightBlue, 150),
+            11 | 14 | 15 => (Colour::Pink, 300),
+            16 | 18 | 19 => (Colour::Orange, 300),
+            21 | 23 | 24 => (Colour::Red, 450),
+            26 | 27 | 29 => (Colour::Yellow, 450),
+            31 | 32 | 34 => (Colour::Green, 600),
+            37 | 39 => (Colour::DarkBlue, 400),
+            _ => unreachable!(),
+        };
+
+        if house_count == 0 {
+            // Check full colour ownership
+            // Check money
+            // Cannot build unevenly
+            let full_colour: bool = match colour {
+                Colour::Brown => COLOUR_BROWN
+                    .iter()
+                    .all(|tile_id| player.ownership.contains_key(tile_id)),
+                Colour::DarkBlue => COLOUR_DARK_BLUE
+                    .iter()
+                    .all(|tile_id| player.ownership.contains_key(tile_id)),
+                Colour::Green => COLOUR_GREEN
+                    .iter()
+                    .all(|tile_id| player.ownership.contains_key(tile_id)),
+                Colour::LightBlue => COLOUR_LIGHT_BLUE
+                    .iter()
+                    .all(|tile_id| player.ownership.contains_key(tile_id)),
+                Colour::Orange => COLOUR_ORANGE
+                    .iter()
+                    .all(|tile_id| player.ownership.contains_key(tile_id)),
+                Colour::Pink => COLOUR_PINK
+                    .iter()
+                    .all(|tile_id| player.ownership.contains_key(tile_id)),
+                Colour::Red => COLOUR_RED
+                    .iter()
+                    .all(|tile_id| player.ownership.contains_key(tile_id)),
+                Colour::Yellow => COLOUR_YELLOW
+                    .iter()
+                    .all(|tile_id| player.ownership.contains_key(tile_id)),
+            };
+            if !full_colour {
+                let out: String = "You need to have colour monopoly to build.".to_owned();
+                (PoorOut::new(out, String::new()), None)
+            } else if player.money < price {
+                let out: String = format!(
+                    "Not enough money. You have {}, building costs {}.",
+                    player.money, price,
+                );
+                (PoorOut::new(out, String::new()), None)
+            } else {
+                player.money -= price;
+                let out: String = format!("Built 3 houses. {} in the bank", player.money);
+                (PoorOut::new(out, String::new()), Some(player.money))
+            }
+        } else if player.money < price {
+            let out: String = format!(
+                "Not enough money. You have {}, building costs {}.",
+                player.money, price,
+            );
+            (PoorOut::new(out, String::new()), None)
+        } else {
+            player.money -= price;
+            let _: Option<u8> = player.ownership.insert(tile_id, house_count + 1);
+
+            let out: String = if house_count == 4 {
+                format!("Built 3 hotels. {} in the bank", player.money)
+            } else {
+                format!("Built 3 houses. {} in the bank", player.money)
+            };
+            (PoorOut::new(out, String::new()), Some(player.money))
+        }
     }
 }

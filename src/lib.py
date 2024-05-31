@@ -470,8 +470,17 @@ class App(metaclass=Singleton):
         await update.effective_chat.send_photo(MAPS[position])
 
     async def build_command(
-        self, update: Update, _context: ContextTypes.DEFAULT_TYPE
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
+        if context.args is None or len(context.args) < 1:
+            await reply(update, "Enter a position as integer")
+            return
+        try:
+            tile_id: int = int(context.args[0])
+        except ValueError:
+            await reply(update, "Enter a position as integer")
+            return
+        
         chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
 
@@ -480,14 +489,14 @@ class App(metaclass=Singleton):
             return
 
         user_id: int = update.effective_user.id
-        output, maybe_build = game.build(user_id)
+        output, maybe_money = game.build(user_id, tile_id)
         if len(output.out) > 0:
             await reply(update, output.out)
         if len(output.warning) > 0:
             warnings.warn(output.warning)
-        if maybe_build is None:
+        if maybe_money is None:
             return
-        money, tile_id, house_count = maybe_build
+        money: int = maybe_money
         db.build_player(self.db_conn, chat_id, user_id, money, tile_id)
 
     async def query(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
