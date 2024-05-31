@@ -50,6 +50,9 @@ impl PyGame {
     fn get_position(&self, user_id: usize) -> usize {
         self.inner.get_position(user_id)
     }
+    fn build(&mut self, user_id: usize) -> (PoorResult, Option<(isize, usize)>) {
+        pass_poor(self.inner.build(user_id))
+    }
 }
 
 #[pymodule]

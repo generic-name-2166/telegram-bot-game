@@ -609,4 +609,8 @@ impl Game {
         };
         player.position
     }
+    /// If successfull, returns Some((caller.money, tile_id))
+    pub fn build(&mut self, user_id: usize) -> (PoorOut, Option<(isize, usize)>) {
+
+    }
 }

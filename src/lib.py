@@ -31,6 +31,7 @@ INLINE_BUTTONS: dict[int, InlineKeyboardButton] = {
     10: InlineKeyboardButton("finish", callback_data="10"),
     11: InlineKeyboardButton("status", callback_data="11"),
     12: InlineKeyboardButton("map", callback_data="12"),
+    13: InlineKeyboardButton("build", callback_data="13"),
 }
 
 MAPS: dict[int, str] = {
@@ -117,6 +118,7 @@ In a game
 - /finish to finish the game
 - /status to see game's status
 - /map to see the board and your position
+- /build <tile> to add a house to an owned street
 """
     await reply(update, text, reply_markup=reply_markup)
 
@@ -173,6 +175,7 @@ class App(metaclass=Singleton):
         self.app.add_handler(CommandHandler("finish", self.finish_command))
         self.app.add_handler(CommandHandler("status", self.status_command))
         self.app.add_handler(CommandHandler("map", self.map_command))
+        self.app.add_handler(CommandHandler("build", self.build_command))
         self.app.add_handler(CallbackQueryHandler(self.query))
         # The order matters
         self.app.add_handler(MessageHandler(filters.TEXT, echo))
@@ -455,7 +458,7 @@ class App(metaclass=Singleton):
         chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
 
-        game: Optional[Game] = self.games.get(chat_id)
+        game: Optional[Game] = self.games.get(chat_id, None)
 
         if game is None:
             # Send empty map
@@ -465,6 +468,27 @@ class App(metaclass=Singleton):
         user_id: int = update.effective_user.id
         position: int = game.get_position(user_id)
         await update.effective_chat.send_photo(MAPS[position])
+
+    async def build_command(
+        self, update: Update, _context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        chat_id: int = update.effective_chat.id
+        self.db_sync(chat_id)
+
+        game: Optional[Game] = self.games.get(chat_id, None)
+        if game is None:
+            return
+
+        user_id: int = update.effective_user.id
+        output, maybe_build = game.build(user_id)
+        if len(output.out) > 0:
+            await reply(update, output.out)
+        if len(output.warning) > 0:
+            warnings.warn(output.warning)
+        if maybe_build is None:
+            return
+        money, tile_id, house_count = maybe_build
+        db.build_player(self.db_conn, chat_id, user_id, money, tile_id)
 
     async def query(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         query: CallbackQuery = update.callback_query
@@ -494,6 +518,8 @@ class App(metaclass=Singleton):
             await self.status_command(update, context)
         elif command == "12":
             await self.map_command(update, context)
+        elif command == "13":
+            await self.build_command(update, context)
         # else should be unreachable
 
         await query.answer()

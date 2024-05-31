@@ -300,3 +300,33 @@ def rent_chat(
 
     conn.execute(query)
     conn.commit()
+
+
+def build_player(
+    conn: Connection,
+    chat_id: int,
+    user_id: int,
+    money: int,
+    tile_id: int,
+) -> None:
+    query: sql.SQL = sql.SQL(
+        """DO $$
+DECLARE
+    player_0 integer;
+    ownership_0 integer;
+BEGIN
+    player_0 := (SELECT player_id FROM chat WHERE chat_id = {chat_id} AND user_id = {user_id});
+    ownership_0 := (SELECT id FROM player WHERE player_id = player_0 AND tile_id = {tile_id});
+    
+    UPDATE chat 
+    SET money = {money}
+    WHERE player_id = player_0;
+
+    UPDATE player
+    SET house_count = house_count + 1
+    WHERE id = ownership_0;
+END $$;"""
+    ).format(chat_id=chat_id, user_id=user_id, tile_id=tile_id, money=money)
+
+    conn.execute(query)
+    conn.commit()
