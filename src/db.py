@@ -110,7 +110,7 @@ def fetch_game(
 def add_user(
     conn: Connection, chat_id: int, user_id: int, username: Optional[str]
 ) -> None:
-    query: sql.SQL = sql.SQL("""DO $$
+    query: sql.Composed = sql.SQL("""DO $$
 BEGIN
     INSERT INTO chat  (chat_id, user_id, "position", money) 
     VALUES ({chat_id}, {user_id}, {position}, {money})
@@ -170,7 +170,7 @@ def roll_user(
     status: str,
 ) -> None:
     # Have to do it inline because status is a string
-    query: sql.SQL = sql.SQL("""DO $$
+    query: sql.Composed = sql.SQL("""DO $$
 DECLARE 
     status_0 varchar(10) := {status};
 BEGIN
@@ -196,7 +196,7 @@ END $$;""").format(
 def buy_user(
     conn: Connection, chat_id: int, user_id: int, money: int, tile_id: int
 ) -> None:
-    query: sql.SQL = sql.SQL("""DO $$
+    query: sql.Composed = sql.SQL("""DO $$
 DECLARE
     player_0 integer;
 BEGIN
@@ -220,7 +220,7 @@ END $$;""").format(money=money, chat_id=chat_id, user_id=user_id, tile_id=tile_i
 
 
 def finish_game(conn: Connection, chat_id: int) -> None:
-    query: sql.SQL = sql.SQL("""DO $$
+    query: sql.Composed = sql.SQL("""DO $$
 BEGIN
     DELETE FROM game WHERE chat_id = {chat_id};
 
@@ -237,7 +237,7 @@ END $$;""").format(chat_id=chat_id)
 def auction_game(
     conn: Connection, chat_id: int, user_id: int, bid_time_sec: int
 ) -> None:
-    query: sql.SQL = sql.SQL(
+    query: sql.Composed = sql.SQL(
         """
 UPDATE game 
 SET 
@@ -256,7 +256,7 @@ WHERE chat_id = {chat_id};
 def bid_game(
     conn: Connection, chat_id: int, user_id: int, bid_time_sec: int, price: int
 ) -> None:
-    query: sql.SQL = sql.SQL(
+    query: sql.Composed = sql.SQL(
         """
     UPDATE game
     SET
@@ -279,7 +279,7 @@ def rent_chat(
     rentee_id: int,
     rentee_money: int,
 ) -> None:
-    query: sql.SQL = sql.SQL(
+    query: sql.Composed = sql.SQL(
         """DO $$
     BEGIN
         UPDATE chat
@@ -309,14 +309,18 @@ def build_player(
     money: int,
     tile_id: int,
 ) -> None:
-    query: sql.SQL = sql.SQL(
+    query: sql.Composed = sql.SQL(
         """DO $$
 DECLARE
     player_0 integer;
     ownership_0 integer;
 BEGIN
-    player_0 := (SELECT player_id FROM chat WHERE chat_id = {chat_id} AND user_id = {user_id});
-    ownership_0 := (SELECT id FROM player WHERE player_id = player_0 AND tile_id = {tile_id});
+    player_0 := (
+        SELECT player_id FROM chat WHERE chat_id = {chat_id} AND user_id = {user_id}
+    );
+    ownership_0 := (
+        SELECT id FROM player WHERE player_id = player_0 AND tile_id = {tile_id}
+    );
     
     UPDATE chat 
     SET money = {money}
