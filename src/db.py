@@ -50,6 +50,7 @@ def collect_players(
     players: dict[int, tuple[Optional[str], dict[int, int], int, int]] = dict()
     for row in rows:
         user_id: int = row["user_id"]
+        is_jailed: bool = row["is_jailed"]
         # Option -> case when player is registerd but owns nothing
         tile_id: Optional[int] = row["tile_id"]
         house_count: Optional[int] = row["house_count"]
