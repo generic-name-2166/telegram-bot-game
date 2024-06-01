@@ -1,3 +1,5 @@
+use rand::{seq::SliceRandom, thread_rng};
+
 use crate::game::{roll_dice, Player};
 
 pub const BOARD: [Tile; 40] = [
@@ -251,4 +253,95 @@ impl Tile {
     const fn new(name: &'static str, inner: TileType) -> Self {
         Self { name, inner }
     }
+}
+
+#[derive(Clone, Copy)]
+pub enum CardEffect {
+    Money(isize),
+    Position(usize),
+    NearestStation,
+    NearestUtility,
+    GetOutOfJail,
+    GoBack3,
+    GoToJail,
+    PayAll(isize),
+    Repairs,
+    Assession,
+}
+
+#[derive(Clone, Copy)]
+pub struct Card {
+    pub note: &'static str,
+    pub effect: CardEffect,
+}
+
+impl Card {
+    pub const fn new(note: &'static str, effect: CardEffect) -> Self {
+        Self { note, effect }
+    }
+}
+
+const CHANCES: [Card; 16] = [
+    Card::new("Advance to Go", CardEffect::Position(0)),
+    Card::new("Advance to Trafalgar Square", CardEffect::Position(24)),
+    Card::new("Advance to Mayfair", CardEffect::Position(39)),
+    Card::new("Advance to Pall Mall", CardEffect::Position(11)),
+    Card::new("Advance to the nearest Station. If unowned, you may buy it from the Bank. If owned, pay wonder twice the rental to which they are otherwise entitled.", CardEffect::NearestStation),
+    Card::new("Advance to the nearest Station. If unowned, you may buy it from the Bank. If owned, pay wonder twice the rental to which they are otherwise entitled.", CardEffect::NearestStation),
+    Card::new("Advance token to nearest Utility. If unowned, you may buy it from the Bank. If owned, throw dice and pay owner a total ten times amount thrown.", CardEffect::NearestUtility),
+    Card::new("Bank pays you dividend of £50", CardEffect::Money(50)),
+    Card::new("Get Out of Jail Free", CardEffect::GetOutOfJail),
+    Card::new("Go Back 3 Spaces", CardEffect::GoBack3),
+    Card::new("Go to Jail. Go directly to Jail, do not pass Go, do not collect £200", CardEffect::GoToJail),
+    Card::new("Make general repairs on all your property. For each house pay £25. For each hotel pay £100", CardEffect::Repairs),
+    Card::new("Speeding fine £15", CardEffect::Money(-15)),
+    Card::new("Take a trip to Kings Cross Station", CardEffect::Position(5)),
+    Card::new("You have been elected Chairman of the Board. Pay each player £50", CardEffect::PayAll(50)),
+    Card::new("Your building loan matures. Collect £150", CardEffect::Money(150)),
+];
+const CHESTS: [Card; 16] = [
+    Card::new("Advance to Go", CardEffect::Position(0)),
+    Card::new(
+        "Bank error in your favour. Collect £200",
+        CardEffect::Money(200),
+    ),
+    Card::new("Doctor’s fee. Pay £50", CardEffect::Money(-50)),
+    Card::new("From sale of stock you get £50", CardEffect::Money(50)),
+    Card::new("Get Out of Jail Free", CardEffect::GetOutOfJail),
+    Card::new(
+        "Go to Jail. Go directly to Jail, do not pass Go, do not collect £200",
+        CardEffect::GoToJail,
+    ),
+    Card::new("Holiday fund matures. Receive £100", CardEffect::Money(100)),
+    Card::new("Income tax refund. Collect £20", CardEffect::Money(20)),
+    Card::new(
+        "It is your birthday. Collect £10 from every player",
+        CardEffect::PayAll(-10),
+    ),
+    Card::new(
+        "Life insurance matures. Collect £100",
+        CardEffect::Money(100),
+    ),
+    Card::new("Pay hospital fees of £100", CardEffect::Money(-100)),
+    Card::new("Pay school fees of £50", CardEffect::Money(-50)),
+    Card::new("Receive £25 consultancy fee", CardEffect::Money(-25)),
+    Card::new(
+        "You are assessed for street repairs. £40 per house. £115 per hotel",
+        CardEffect::Assession,
+    ),
+    Card::new(
+        "You have won second prize in a beauty contest. Collect £10",
+        CardEffect::Money(10),
+    ),
+    Card::new("You inherit £100", CardEffect::Money(100)),
+];
+
+pub fn chance_roll() -> Card {
+    let mut rng = thread_rng();
+    *CHANCES.choose(&mut rng).expect("const array is not empty")
+}
+
+pub fn chest_roll() -> Card {
+    let mut rng = thread_rng();
+    *CHESTS.choose(&mut rng).expect("const array is not empty")
 }
