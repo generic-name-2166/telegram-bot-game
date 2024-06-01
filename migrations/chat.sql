@@ -6,5 +6,6 @@ CREATE TABLE IF NOT EXISTS chat
     "position" smallint NOT NULL,
     money integer NOT NULL,
     is_jailed boolean NOT NULL DEFAULT FALSE,
+    streak smallint NOT NULL DEFAULT 0,
     PRIMARY KEY (player_id)
 );

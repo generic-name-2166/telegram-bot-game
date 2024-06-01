@@ -64,6 +64,8 @@ pub struct Player {
     ownership: HashMap<usize, u8>,
     pub position: usize,
     pub money: isize,
+    pub is_jailed: bool,
+    pub streak: u8,
 }
 
 impl Player {
@@ -72,8 +74,10 @@ impl Player {
             user_id,
             username,
             ownership: HashMap::new(),
-            money: 1500,
             position: 0,
+            money: 1500,
+            is_jailed: false,
+            streak: 0,
         }
     }
     pub fn serialize(&self) -> SerPlayer {
@@ -83,6 +87,8 @@ impl Player {
             self.ownership.clone(),
             self.position,
             self.money,
+            self.is_jailed,
+            self.streak,
         )
     }
     pub fn deserialize(player: &SerPlayer) -> Self {
@@ -92,9 +98,11 @@ impl Player {
             ownership: player.2.clone(),
             position: player.3,
             money: player.4,
+            is_jailed: player.5,
+            streak: player.6,
         }
     }
-    pub fn change(&mut self, position: usize, looped: bool, change: Change) {
+    pub fn change(&mut self, position: usize, looped: bool, change: Change, rolled_double: bool) {
         self.position = position;
         match (change, looped) {
             (Change::None, false) | (Change::TaxedIncome, true) => {}
@@ -102,6 +110,11 @@ impl Player {
             (Change::TaxedIncome, false) => self.money -= 200,
             (Change::TaxedLuxury, _) => self.money -= 100,
         };
+        if rolled_double {
+            self.streak += 1;
+        } else {
+            self.streak = 0;
+        }
     }
     pub fn try_buying(&mut self, name: &str, prop: impl GetCost) -> (PoorOut, bool) {
         let cost: isize = prop.get_cost();
@@ -140,6 +153,12 @@ impl Player {
             | TileType::TaxLuxury => unreachable!(),
         };
         self.money -= cost;
+    }
+    fn go_to_jail(&mut self, reason: String) -> PoorOut {
+        self.streak = 0;
+        self.is_jailed = true;
+        self.position = 10;
+        PoorOut::new(reason, String::new())
     }
 }
 
@@ -270,7 +289,7 @@ impl Game {
             maybe_auction,
         )
     }
-    /// Returns result and position, money if they changed
+    /// Returns result and position, money and game status if they changed
     pub fn roll(&mut self, caller_id: usize) -> (PoorOut, Option<(usize, isize, &'static str)>) {
         if !matches!(self.status, Status::Roll) {
             // Do nothing if it's not the time to roll
@@ -287,6 +306,17 @@ impl Game {
         }
 
         let (roll_1, roll_2) = roll_dice();
+
+        if roll_1 == roll_2 && player.streak >= 2 {
+            let player: &mut Player = &mut self.players[self.current_player];
+            let reason: String = format!(
+                "{} rolled {} and {}.\nRolled double 3 times in a row, go to jail.",
+                player.username.as_deref().unwrap_or("None"),
+                roll_1,
+                roll_2,
+            );
+            return (player.go_to_jail(reason), );
+        }
 
         let move_to: usize = roll_1 + roll_2 + player.position;
 
@@ -358,10 +388,13 @@ impl Game {
             | TileType::Go => Change::None,
         };
 
+        let rolled_double: bool = roll_1 == roll_2;
+
         let player: &mut Player = &mut self.players[self.current_player];
 
-        player.change(position, looped, player_change);
-        if matches!(self.status, Status::Roll) {
+        player.change(position, looped, player_change, rolled_double);
+
+        if matches!(self.status, Status::Roll) && !rolled_double {
             self.current_player = if self.current_player + 1 < player_count {
                 self.current_player + 1
             } else {

@@ -59,7 +59,7 @@ impl From<PoorOut> for PoorResult {
     }
 }
 
-pub type SerPlayer = (usize, Option<String>, HashMap<usize, u8>, usize, isize);
+pub type SerPlayer = (usize, Option<String>, HashMap<usize, u8>, usize, isize, bool, u8);
 
 #[pyclass]
 pub struct SerGame {

@@ -51,6 +51,10 @@ def collect_players(
     for row in rows:
         user_id: int = row["user_id"]
         is_jailed: bool = row["is_jailed"]
+        streak: int = row["streak"]
+        # count double streak to go to jail 
+        # alternatively, count the number of turns in jail
+
         # Option -> case when player is registerd but owns nothing
         tile_id: Optional[int] = row["tile_id"]
         house_count: Optional[int] = row["house_count"]
