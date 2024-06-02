@@ -301,6 +301,8 @@ class App(metaclass=Singleton):
             return
 
         output, maybe_change = game.roll(user_id)
+        if len(output.warning) > 0:
+            warnings.warn(output.warning)
         if maybe_change is None:
             # TODO change types to indicate this better
             # No change
@@ -310,8 +312,6 @@ class App(metaclass=Singleton):
         keyboard = construct_keyboard((5, 6, 12) if status == "buy" else (4, 12))
 
         await reply(update, output.out, reply_markup=keyboard)
-        if len(output.warning) > 0:
-            warnings.warn(output.warning)
 
         db.roll_user(self.db_conn, chat_id, user_id, position, money, status)
 

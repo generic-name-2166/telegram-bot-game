@@ -50,13 +50,6 @@ impl Status {
     }
 }
 
-/// Enum to mutate Player instance
-pub enum Change {
-    None,
-    TaxedLuxury,
-    TaxedIncome,
-}
-
 pub struct Player {
     user_id: usize,
     username: Option<String>,
@@ -110,11 +103,6 @@ impl Player {
             (Change::TaxedIncome, false) => self.money -= 200,
             (Change::TaxedLuxury, _) => self.money -= 100,
         };
-        if rolled_double {
-            self.streak += 1;
-        } else {
-            self.streak = 0;
-        }
     }
     pub fn try_buying(&mut self, name: &str, prop: impl GetCost) -> (PoorOut, bool) {
         let cost: isize = prop.get_cost();
@@ -154,11 +142,10 @@ impl Player {
         };
         self.money -= cost;
     }
-    fn go_to_jail(&mut self, reason: String) -> PoorOut {
+    fn go_to_jail(&mut self) {
         self.streak = 0;
         self.is_jailed = true;
         self.position = 10;
-        PoorOut::new(reason, String::new())
     }
 }
 
@@ -289,42 +276,32 @@ impl Game {
             maybe_auction,
         )
     }
-    /// Returns result and position, money and game status if they changed
-    pub fn roll(&mut self, caller_id: usize) -> (PoorOut, Option<(usize, isize, &'static str)>) {
+    /// Returns result and Some((position, money, is_jailed, streak, game.status == "buy")) if changed
+    pub fn roll(&mut self, caller_id: usize) -> (PoorOut, Option<(usize, isize, bool, u8, bool)>) {
         if !matches!(self.status, Status::Roll) {
             // Do nothing if it's not the time to roll
+            return (PoorOut::empty(), None);
+        } else if self.players[self.current_player].user_id != caller_id {
+            // Do nothing if it's not the callers turn to roll
             return (PoorOut::empty(), None);
         }
 
         let player_count: usize = self.players.len();
 
-        let player: &Player = &self.players[self.current_player];
-
-        if player.user_id != caller_id {
-            // Do nothing if it's not the callers turn to roll
-            return (PoorOut::empty(), None);
-        }
-
         let (roll_1, roll_2) = roll_dice();
+        let rolled_double: bool = roll_1 == roll_2;
 
-        if roll_1 == roll_2 && player.streak >= 2 {
-            let player: &mut Player = &mut self.players[self.current_player];
-            let reason: String = format!(
-                "{} rolled {} and {}.\nRolled double 3 times in a row, go to jail.",
-                player.username.as_deref().unwrap_or("None"),
-                roll_1,
-                roll_2,
-            );
-            return (player.go_to_jail(reason), );
-        }
-
-        let move_to: usize = roll_1 + roll_2 + player.position;
+        let move_to: usize = roll_1 + roll_2 + self.players[self.current_player].position;
 
         let (looped, position) = if move_to >= 40 {
             (true, move_to - 40)
         } else {
             (false, move_to)
         };
+
+        let has_owner: bool = check_owner(&self.players, &position);
+
+        let player: &mut Player = &mut self.players[self.current_player];
 
         let landed_on: Tile = BOARD[position];
 
@@ -339,43 +316,59 @@ impl Game {
             String::new(),
         );
 
-        if player.ownership.contains_key(&position) {
-            return (output, Some((position, player.money, "roll")));
+        if looped {
+            player.money += 200;
+            output = output.merge_out("Passed GO.");
+        }
+        player.position = position;
+
+        if rolled_double && player.streak >= 2 {
+            let out: String = format!(
+                "{} rolled {} and {}.\nRolled double 3 times in a row, go to jail.",
+                player.username.as_deref().unwrap_or("None"),
+                roll_1,
+                roll_2,
+            );
+            player.go_to_jail();
+            return (
+                PoorOut::new(out, String::new()),
+                Some((10, player.money, true, 0, false)),
+            );
+        } else if rolled_double {
+            player.streak += 1;
+        } else {
+            player.streak = 0;
         }
 
-        let has_owner: bool = check_owner(&self.players, &position);
+        if player.ownership.contains_key(&position) {
+            return (output, Some((position, player.money, false, player.streak, false)));
+        }
 
         // TODO
-        let player_change: Change = match landed_on.inner {
+        match landed_on.inner {
             TileType::Street(prop) if !has_owner => {
                 self.status = Status::Buy;
                 output =
                     output.merge_out(&format!("Buy for {} or start an auction.", prop.get_cost()));
-                Change::None
             }
             TileType::Railroad(prop) if !has_owner => {
                 self.status = Status::Buy;
                 output =
                     output.merge_out(&format!("Buy for {} or start an auction.", prop.get_cost()));
-                Change::None
             }
             TileType::Utility(prop) if !has_owner => {
                 self.status = Status::Buy;
                 output =
                     output.merge_out(&format!("Buy for {} or start an auction.", prop.get_cost()));
-                Change::None
             }
             TileType::Chance => {
                 // TODO
-                Change::None
             }
             TileType::Chest => {
                 // TODO
-                Change::None
             }
             TileType::GoToJail => {
                 // TODO
-                Change::None
             }
             // TODO bankruptcy
             TileType::TaxIncome => Change::TaxedIncome,
@@ -385,31 +378,23 @@ impl Game {
             | TileType::Utility(_)
             | TileType::Free
             | TileType::JailVisit
-            | TileType::Go => Change::None,
+            | TileType::Go => {},
         };
 
-        let rolled_double: bool = roll_1 == roll_2;
+        let is_roll: bool = matches!(self.status, Status::Roll);
 
-        let player: &mut Player = &mut self.players[self.current_player];
-
-        player.change(position, looped, player_change, rolled_double);
-
-        if matches!(self.status, Status::Roll) && !rolled_double {
+        if is_roll && !rolled_double {
             self.current_player = if self.current_player + 1 < player_count {
                 self.current_player + 1
             } else {
                 0
             };
         }
-
-        if looped {
-            output = output.merge_out("Passed GO.");
-        }
         output = output.merge_out(&format!("{} in the bank.", player.money));
 
         (
             output,
-            Some((position, player.money, self.status.stringify())),
+            Some((position, player.money, false, player.streak, !is_roll)),
         )
     }
     /// Returns result and money with tile_id if successful
