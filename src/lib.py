@@ -13,6 +13,7 @@ import warnings
 from dataclasses import dataclass
 from psycopg import Connection
 from typing import Optional, Any
+from collections.abc import Sequence
 
 import db
 from monopoly import Game
@@ -84,7 +85,7 @@ def match_button(command: int) -> InlineKeyboardButton:
     return INLINE_BUTTONS[command]
 
 
-def construct_keyboard(commands: tuple[int]) -> InlineKeyboardMarkup:
+def construct_keyboard(commands: Sequence[int]) -> InlineKeyboardMarkup:
     result = tuple(map(match_button, commands))
     return InlineKeyboardMarkup.from_column(result)
 
@@ -123,7 +124,7 @@ In a game
     await reply(update, text, reply_markup=reply_markup)
 
 
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def echo(update: Update, _context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message and update.message.text:
         await update.message.reply_text(update.message.text)
 
@@ -290,7 +291,7 @@ class App(metaclass=Singleton):
         del self.ready[chat_id]
 
     async def roll_command(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+        self, update: Update, _context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         chat_id: int = update.effective_chat.id
         user_id: int = update.effective_user.id

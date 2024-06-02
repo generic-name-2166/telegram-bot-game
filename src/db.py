@@ -23,10 +23,10 @@ def connect_to_db(context: Any) -> Connection:
     secrets: Path = PARENT.joinpath("secret.txt")
     if secrets.is_file():
         # Running locally
-        params: dict = load_local()
+        params: dict[str, str | int] = load_local()
     else:
         # Running in the cloud
-        params: dict = load_cloud(context)
+        params: dict[str, str | int] = load_cloud(context)
 
     conn: Connection = psycopg.connect(row_factory=dict_row, **params)
     return conn
@@ -45,7 +45,7 @@ def flatten_row(
 
 
 def collect_players(
-    rows: list[dict],
+    rows: list[dict[str, int | bool | Optional[int | str] | dict[int, int]]],
 ) -> list[tuple[int, Optional[str], dict[int, int], int, int]]:
     players: dict[int, tuple[Optional[str], dict[int, int], int, int]] = dict()
     for row in rows:
@@ -68,7 +68,7 @@ def collect_players(
 
             position: int = row["position"]
             money: int = row["money"]
-            players[user_id] = (username, ownership, position, money)
+            players[user_id] = (username, ownership, position, money, is_jailed, streak)
         else:
             players[user_id][1][tile_id] = house_count
 
