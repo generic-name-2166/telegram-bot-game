@@ -15,8 +15,9 @@ use std::{
 
 use crate::{
     game::board::{
-        Colour, GetCost, Railroad, Tile, TileType, Utility, BOARD, COLOUR_BROWN, COLOUR_DARK_BLUE,
-        COLOUR_GREEN, COLOUR_LIGHT_BLUE, COLOUR_ORANGE, COLOUR_PINK, COLOUR_RED, COLOUR_YELLOW,
+        chance_roll, chest_roll, Card, CardEffect, Colour, GetCost, Railroad, Tile, TileType,
+        Utility, BOARD, COLOUR_BROWN, COLOUR_DARK_BLUE, COLOUR_GREEN, COLOUR_LIGHT_BLUE,
+        COLOUR_ORANGE, COLOUR_PINK, COLOUR_RED, COLOUR_YELLOW,
     },
     io::{PoorOut, SerGame, SerPlayer},
 };
@@ -97,12 +98,14 @@ impl Player {
     }
     pub fn change(&mut self, position: usize, looped: bool, change: Change, rolled_double: bool) {
         self.position = position;
-        match (change, looped) {
-            (Change::None, false) | (Change::TaxedIncome, true) => {}
-            (Change::None, true) => self.money += 200,
-            (Change::TaxedIncome, false) => self.money -= 200,
-            (Change::TaxedLuxury, _) => self.money -= 100,
-        };
+        if looped {
+            self.money += 200;
+        }
+        match change {
+            Change::EffectMoney(money) => self.money += money,
+            Change::EffectMove(position) => self.position = position,
+            Change::None => {}
+        }
     }
     pub fn try_buying(&mut self, name: &str, prop: impl GetCost) -> (PoorOut, bool) {
         let cost: isize = prop.get_cost();
@@ -362,17 +365,123 @@ impl Game {
                     output.merge_out(&format!("Buy for {} or start an auction.", prop.get_cost()));
             }
             TileType::Chance => {
-                // TODO
+                let card: Card = chance_roll();
+                output = output.merge_out(card.note);
+                match card.effect {
+                    CardEffect::Assession => {
+                        // TODO
+                        Change::None
+                    }
+                    CardEffect::GetOutOfJail => {
+                        // TODO
+                        Change::None
+                    }
+                    CardEffect::GoBack3 => {
+                        let move_to: usize = if player.position > 3 {
+                            player.position - 3
+                        } else {
+                            40 + player.position - 3
+                        };
+                        Change::EffectMove(move_to)
+                    }
+                    CardEffect::GoToJail => {
+                        // TODO
+                        Change::None
+                    }
+                    CardEffect::Money(money) => Change::EffectMoney(money),
+                    CardEffect::NearestStation => {
+                        let move_to: usize = match player.position {
+                            ..=4 => 5,
+                            ..=14 => 15,
+                            ..=25 => 25,
+                            ..=35 => 35,
+                            _ => 5,
+                        };
+                        // TODO rent effects here
+                        Change::EffectMove(move_to)
+                    }
+                    CardEffect::NearestUtility => {
+                        let move_to: usize = match player.position {
+                            ..=11 => 12,
+                            ..=27 => 28,
+                            _ => 12,
+                        };
+                        // TODO rent effects here
+                        Change::EffectMove(move_to)
+                    }
+                    CardEffect::PayAll(_money) => {
+                        // TODO
+                        Change::None
+                    }
+                    CardEffect::Position(position) => Change::EffectMove(position),
+                    CardEffect::Repairs => {
+                        // TODO
+                        Change::None
+                    }
+                }
             }
             TileType::Chest => {
-                // TODO
+                let card: Card = chest_roll();
+                output = output.merge_out(card.note);
+                match card.effect {
+                    CardEffect::Assession => {
+                        // TODO
+                        Change::None
+                    }
+                    CardEffect::GetOutOfJail => {
+                        // TODO
+                        Change::None
+                    }
+                    CardEffect::GoBack3 => {
+                        let move_to: usize = if player.position > 3 {
+                            player.position - 3
+                        } else {
+                            40 + player.position - 3
+                        };
+                        Change::EffectMove(move_to)
+                    }
+                    CardEffect::GoToJail => {
+                        // TODO
+                        Change::None
+                    }
+                    CardEffect::Money(money) => Change::EffectMoney(money),
+                    CardEffect::NearestStation => {
+                        let move_to: usize = match player.position {
+                            ..=4 => 5,
+                            ..=14 => 15,
+                            ..=25 => 25,
+                            ..=35 => 35,
+                            _ => 5,
+                        };
+                        // TODO rent effects here
+                        Change::EffectMove(move_to)
+                    }
+                    CardEffect::NearestUtility => {
+                        let move_to: usize = match player.position {
+                            ..=11 => 12,
+                            ..=27 => 28,
+                            _ => 12,
+                        };
+                        // TODO rent effects here
+                        Change::EffectMove(move_to)
+                    }
+                    CardEffect::PayAll(_money) => {
+                        // TODO
+                        Change::None
+                    }
+                    CardEffect::Position(position) => Change::EffectMove(position),
+                    CardEffect::Repairs => {
+                        // TODO
+                        Change::None
+                    }
+                }
             }
             TileType::GoToJail => {
                 // TODO
             }
             // TODO bankruptcy
-            TileType::TaxIncome => Change::TaxedIncome,
-            TileType::TaxLuxury => Change::TaxedLuxury,
+            TileType::TaxIncome => Change::EffectMoney(-200),
+            TileType::TaxLuxury => Change::EffectMoney(-100),
             TileType::Street(_)
             | TileType::Railroad(_)
             | TileType::Utility(_)
