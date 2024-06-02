@@ -4,7 +4,7 @@ mod io;
 use pyo3::prelude::{pyclass, pymethods, pymodule, Bound, PyModule, PyResult};
 
 use crate::{
-    game::Game,
+    game::{Game, RollResult},
     io::{pass_poor, PoorResult, SerGame},
 };
 
@@ -29,7 +29,7 @@ impl PyGame {
         let (inner, maybe_auction) = Game::deserialize(game);
         (Self { inner }, maybe_auction)
     }
-    fn roll(&mut self, caller_id: usize) -> (PoorResult, Option<(usize, isize, bool, u8, bool)>) {
+    fn roll(&mut self, caller_id: usize) -> (PoorResult, Option<RollResult>) {
         pass_poor(self.inner.roll(caller_id))
     }
     fn buy(&mut self, caller_id: usize) -> (PoorResult, Option<(isize, usize)>) {

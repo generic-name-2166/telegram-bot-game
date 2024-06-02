@@ -5,6 +5,7 @@ SELECT
 	chat.position,
 	chat.money,
 	chat.is_jailed,
+	chat.streak,
 	game.status,
 	game.current_player,
 	game.biggest_bid, 

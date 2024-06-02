@@ -307,13 +307,15 @@ class App(metaclass=Singleton):
             # TODO change types to indicate this better
             # No change
             return
-        position, money, status = maybe_change
+        position, money, is_jailed, streak, status = maybe_change
 
-        keyboard = construct_keyboard((5, 6, 12) if status == "buy" else (4, 12))
+        keyboard = construct_keyboard((5, 6, 12) if status else (4, 12))
 
         await reply(update, output.out, reply_markup=keyboard)
 
-        db.roll_user(self.db_conn, chat_id, user_id, position, money, status)
+        db.roll_user(
+            self.db_conn, chat_id, user_id, position, money, is_jailed, streak, status
+        )
 
     async def buy_command(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -480,7 +482,7 @@ class App(metaclass=Singleton):
         except ValueError:
             await reply(update, "Enter a position as integer")
             return
-        
+
         chat_id: int = update.effective_chat.id
         self.db_sync(chat_id)
 

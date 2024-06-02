@@ -52,7 +52,7 @@ def collect_players(
         user_id: int = row["user_id"]
         is_jailed: bool = row["is_jailed"]
         streak: int = row["streak"]
-        # count double streak to go to jail 
+        # count double streak to go to jail
         # alternatively, count the number of turns in jail
 
         # Option -> case when player is registerd but owns nothing
@@ -172,27 +172,36 @@ def roll_user(
     user_id: int,
     position: int,
     money: int,
-    status: str,
+    is_jailed: bool,
+    streak: int,
+    status: bool,
 ) -> None:
     # Have to do it inline because status is a string
-    query: sql.Composed = sql.SQL("""DO $$
-DECLARE 
-    status_0 varchar(10) := {status};
+    query: sql.Composed = sql.SQL(
+        """DO $$
 BEGIN
-    UPDATE chat SET "position" = {position}, money = {money}
+    UPDATE chat 
+    SET 
+        "position" = {position}, 
+        money = {money}, 
+        is_jailed = {is_jailed}, 
+        streak = {streak}
     WHERE player_id = (
         SELECT player_id FROM chat
         WHERE user_id = {user_id} AND chat_id = {chat_id}
     );
 
-    UPDATE game SET status = status_0
+    UPDATE game SET status = {status}
     WHERE chat_id = {chat_id};
-END $$;""").format(
-        status=status,
+END $$;"""
+    ).format(
         position=position,
         money=money,
+        is_jailed=is_jailed,
+        streak=streak,
         user_id=user_id,
         chat_id=chat_id,
+        status="buy" if status else "roll",
     )
     conn.execute(query)
     conn.commit()

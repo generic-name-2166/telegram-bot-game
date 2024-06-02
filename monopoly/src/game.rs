@@ -166,9 +166,9 @@ impl Player {
             CardEffect::NearestStation => {
                 self.position = match self.position {
                     ..=4 => 5,
-                    ..=14 => 15,
-                    ..=25 => 25,
-                    ..=35 => 35,
+                    5..=14 => 15,
+                    15..=24 => 25,
+                    25..=35 => 35,
                     _ => 5,
                 };
                 // TODO rent effects here
@@ -176,7 +176,7 @@ impl Player {
             CardEffect::NearestUtility => {
                 self.position = match self.position {
                     ..=11 => 12,
-                    ..=27 => 28,
+                    12..=27 => 28,
                     _ => 12,
                 };
                 // TODO rent effects here
@@ -253,6 +253,9 @@ pub struct Game {
     bidder_id: usize,
 }
 
+/// position, money, is_jailed, streak, game.status == "buy"
+pub type RollResult = (usize, isize, bool, u8, bool);
+
 impl Game {
     pub fn new(info: Vec<(usize, Option<String>)>) -> Self {
         let players: Vec<Player> = info
@@ -326,7 +329,7 @@ impl Game {
         )
     }
     /// Returns result and Some((position, money, is_jailed, streak, game.status == "buy")) if changed
-    pub fn roll(&mut self, caller_id: usize) -> (PoorOut, Option<(usize, isize, bool, u8, bool)>) {
+    pub fn roll(&mut self, caller_id: usize) -> (PoorOut, Option<RollResult>) {
         if !matches!(self.status, Status::Roll) {
             // Do nothing if it's not the time to roll
             return (PoorOut::empty(), None);
