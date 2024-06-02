@@ -29,7 +29,7 @@ impl PyGame {
         let (inner, maybe_auction) = Game::deserialize(game);
         (Self { inner }, maybe_auction)
     }
-    fn roll(&mut self, caller_id: usize) -> (PoorResult, Option<(usize, isize, &'static str)>) {
+    fn roll(&mut self, caller_id: usize) -> (PoorResult, Option<(usize, isize, bool, u8, bool)>) {
         pass_poor(self.inner.roll(caller_id))
     }
     fn buy(&mut self, caller_id: usize) -> (PoorResult, Option<(isize, usize)>) {

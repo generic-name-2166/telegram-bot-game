@@ -96,17 +96,6 @@ impl Player {
             streak: player.6,
         }
     }
-    pub fn change(&mut self, position: usize, looped: bool, change: Change, rolled_double: bool) {
-        self.position = position;
-        if looped {
-            self.money += 200;
-        }
-        match change {
-            Change::EffectMoney(money) => self.money += money,
-            Change::EffectMove(position) => self.position = position,
-            Change::None => {}
-        }
-    }
     pub fn try_buying(&mut self, name: &str, prop: impl GetCost) -> (PoorOut, bool) {
         let cost: isize = prop.get_cost();
         let (out, success) = if self.money < cost {
@@ -149,6 +138,63 @@ impl Player {
         self.streak = 0;
         self.is_jailed = true;
         self.position = 10;
+    }
+    fn roll_card<const IS_CHANCE: bool>(&mut self) -> &'static str {
+        let card: Card = if IS_CHANCE {
+            chance_roll()
+        } else {
+            chest_roll()
+        };
+        match card.effect {
+            CardEffect::Assession => {
+                // TODO
+            }
+            CardEffect::GetOutOfJail => {
+                // TODO
+            }
+            CardEffect::GoBack3 => {
+                self.position = if self.position >= 3 {
+                    self.position - 3
+                } else {
+                    40 + self.position - 3
+                };
+            }
+            CardEffect::GoToJail => {
+                // TODO
+            }
+            CardEffect::Money(money) => self.money += money,
+            CardEffect::NearestStation => {
+                self.position = match self.position {
+                    ..=4 => 5,
+                    ..=14 => 15,
+                    ..=25 => 25,
+                    ..=35 => 35,
+                    _ => 5,
+                };
+                // TODO rent effects here
+            }
+            CardEffect::NearestUtility => {
+                self.position = match self.position {
+                    ..=11 => 12,
+                    ..=27 => 28,
+                    _ => 12,
+                };
+                // TODO rent effects here
+            }
+            CardEffect::PayAll(_money) => {
+                // TODO
+            }
+            CardEffect::Position(position) => {
+                if position < self.position {
+                    self.money += 200;
+                }
+                self.position = position;
+            }
+            CardEffect::Repairs => {
+                // TODO
+            }
+        }
+        card.note
     }
 }
 
@@ -326,17 +372,9 @@ impl Game {
         player.position = position;
 
         if rolled_double && player.streak >= 2 {
-            let out: String = format!(
-                "{} rolled {} and {}.\nRolled double 3 times in a row, go to jail.",
-                player.username.as_deref().unwrap_or("None"),
-                roll_1,
-                roll_2,
-            );
+            output = output.merge_out("Rolled double 3 times in a row, go to jail.");
             player.go_to_jail();
-            return (
-                PoorOut::new(out, String::new()),
-                Some((10, player.money, true, 0, false)),
-            );
+            return (output, Some((10, player.money, true, 0, false)));
         } else if rolled_double {
             player.streak += 1;
         } else {
@@ -344,7 +382,10 @@ impl Game {
         }
 
         if player.ownership.contains_key(&position) {
-            return (output, Some((position, player.money, false, player.streak, false)));
+            return (
+                output,
+                Some((position, player.money, false, player.streak, false)),
+            );
         }
 
         // TODO
@@ -364,130 +405,21 @@ impl Game {
                 output =
                     output.merge_out(&format!("Buy for {} or start an auction.", prop.get_cost()));
             }
-            TileType::Chance => {
-                let card: Card = chance_roll();
-                output = output.merge_out(card.note);
-                match card.effect {
-                    CardEffect::Assession => {
-                        // TODO
-                        Change::None
-                    }
-                    CardEffect::GetOutOfJail => {
-                        // TODO
-                        Change::None
-                    }
-                    CardEffect::GoBack3 => {
-                        let move_to: usize = if player.position > 3 {
-                            player.position - 3
-                        } else {
-                            40 + player.position - 3
-                        };
-                        Change::EffectMove(move_to)
-                    }
-                    CardEffect::GoToJail => {
-                        // TODO
-                        Change::None
-                    }
-                    CardEffect::Money(money) => Change::EffectMoney(money),
-                    CardEffect::NearestStation => {
-                        let move_to: usize = match player.position {
-                            ..=4 => 5,
-                            ..=14 => 15,
-                            ..=25 => 25,
-                            ..=35 => 35,
-                            _ => 5,
-                        };
-                        // TODO rent effects here
-                        Change::EffectMove(move_to)
-                    }
-                    CardEffect::NearestUtility => {
-                        let move_to: usize = match player.position {
-                            ..=11 => 12,
-                            ..=27 => 28,
-                            _ => 12,
-                        };
-                        // TODO rent effects here
-                        Change::EffectMove(move_to)
-                    }
-                    CardEffect::PayAll(_money) => {
-                        // TODO
-                        Change::None
-                    }
-                    CardEffect::Position(position) => Change::EffectMove(position),
-                    CardEffect::Repairs => {
-                        // TODO
-                        Change::None
-                    }
-                }
-            }
-            TileType::Chest => {
-                let card: Card = chest_roll();
-                output = output.merge_out(card.note);
-                match card.effect {
-                    CardEffect::Assession => {
-                        // TODO
-                        Change::None
-                    }
-                    CardEffect::GetOutOfJail => {
-                        // TODO
-                        Change::None
-                    }
-                    CardEffect::GoBack3 => {
-                        let move_to: usize = if player.position > 3 {
-                            player.position - 3
-                        } else {
-                            40 + player.position - 3
-                        };
-                        Change::EffectMove(move_to)
-                    }
-                    CardEffect::GoToJail => {
-                        // TODO
-                        Change::None
-                    }
-                    CardEffect::Money(money) => Change::EffectMoney(money),
-                    CardEffect::NearestStation => {
-                        let move_to: usize = match player.position {
-                            ..=4 => 5,
-                            ..=14 => 15,
-                            ..=25 => 25,
-                            ..=35 => 35,
-                            _ => 5,
-                        };
-                        // TODO rent effects here
-                        Change::EffectMove(move_to)
-                    }
-                    CardEffect::NearestUtility => {
-                        let move_to: usize = match player.position {
-                            ..=11 => 12,
-                            ..=27 => 28,
-                            _ => 12,
-                        };
-                        // TODO rent effects here
-                        Change::EffectMove(move_to)
-                    }
-                    CardEffect::PayAll(_money) => {
-                        // TODO
-                        Change::None
-                    }
-                    CardEffect::Position(position) => Change::EffectMove(position),
-                    CardEffect::Repairs => {
-                        // TODO
-                        Change::None
-                    }
-                }
-            }
+            TileType::Chance => output = output.merge_out(player.roll_card::<true>()),
+            TileType::Chest => output = output.merge_out(player.roll_card::<false>()),
             TileType::GoToJail => {
-                // TODO
+                player.go_to_jail();
+                return (output, Some((10, player.money, true, 0, false)));
             }
             // TODO bankruptcy
-            TileType::TaxIncome => Change::EffectMoney(-200),
-            TileType::TaxLuxury => Change::EffectMoney(-100),
+            TileType::TaxIncome => player.money -= 200,
+            TileType::TaxLuxury => player.money -= 100,
             TileType::Street(_)
             | TileType::Railroad(_)
             | TileType::Utility(_)
             | TileType::Free
             | TileType::JailVisit
-            | TileType::Go => {},
+            | TileType::Go => {}
         };
 
         let is_roll: bool = matches!(self.status, Status::Roll);
