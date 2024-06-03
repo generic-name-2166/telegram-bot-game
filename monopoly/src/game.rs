@@ -196,6 +196,24 @@ impl Player {
         }
         card.note
     }
+    fn build(&mut self, colour: Colour, price: isize, current_house_count: u8) {
+        self.money -= price;
+
+        let colour_tiles = match colour {
+            Colour::Brown => COLOUR_BROWN.iter(),
+            Colour::DarkBlue => COLOUR_DARK_BLUE.iter(),
+            Colour::Green => COLOUR_GREEN.iter(),
+            Colour::LightBlue => COLOUR_LIGHT_BLUE.iter(),
+            Colour::Orange => COLOUR_ORANGE.iter(),
+            Colour::Pink => COLOUR_PINK.iter(),
+            Colour::Red => COLOUR_RED.iter(),
+            Colour::Yellow => COLOUR_YELLOW.iter(),
+        };
+
+        colour_tiles.for_each(|tile_id: &usize| {
+            self.ownership.insert(*tile_id, current_house_count + 1);
+        });
+    }
 }
 
 fn roll_dice() -> (usize, usize) {
@@ -711,32 +729,18 @@ impl Game {
             // Check full colour ownership
             // Check money
             // Cannot build unevenly
-            let full_colour: bool = match colour {
-                Colour::Brown => COLOUR_BROWN
-                    .iter()
-                    .all(|tile_id| player.ownership.contains_key(tile_id)),
-                Colour::DarkBlue => COLOUR_DARK_BLUE
-                    .iter()
-                    .all(|tile_id| player.ownership.contains_key(tile_id)),
-                Colour::Green => COLOUR_GREEN
-                    .iter()
-                    .all(|tile_id| player.ownership.contains_key(tile_id)),
-                Colour::LightBlue => COLOUR_LIGHT_BLUE
-                    .iter()
-                    .all(|tile_id| player.ownership.contains_key(tile_id)),
-                Colour::Orange => COLOUR_ORANGE
-                    .iter()
-                    .all(|tile_id| player.ownership.contains_key(tile_id)),
-                Colour::Pink => COLOUR_PINK
-                    .iter()
-                    .all(|tile_id| player.ownership.contains_key(tile_id)),
-                Colour::Red => COLOUR_RED
-                    .iter()
-                    .all(|tile_id| player.ownership.contains_key(tile_id)),
-                Colour::Yellow => COLOUR_YELLOW
-                    .iter()
-                    .all(|tile_id| player.ownership.contains_key(tile_id)),
+            let mut colour_tiles = match colour {
+                Colour::Brown => COLOUR_BROWN.iter(),
+                Colour::DarkBlue => COLOUR_DARK_BLUE.iter(),
+                Colour::Green => COLOUR_GREEN.iter(),
+                Colour::LightBlue => COLOUR_LIGHT_BLUE.iter(),
+                Colour::Orange => COLOUR_ORANGE.iter(),
+                Colour::Pink => COLOUR_PINK.iter(),
+                Colour::Red => COLOUR_RED.iter(),
+                Colour::Yellow => COLOUR_YELLOW.iter(),
             };
+            let full_colour: bool =
+                colour_tiles.all(|tile_id: &usize| player.ownership.contains_key(tile_id));
             if !full_colour {
                 let out: String = "You need to have colour monopoly to build.".to_owned();
                 (PoorOut::new(out, String::new()), None)
@@ -747,7 +751,7 @@ impl Game {
                 );
                 (PoorOut::new(out, String::new()), None)
             } else {
-                player.money -= price;
+                player.build(colour, price, house_count);
                 let out: String = format!("Built 3 houses. {} in the bank", player.money);
                 (PoorOut::new(out, String::new()), Some(player.money))
             }
@@ -758,8 +762,7 @@ impl Game {
             );
             (PoorOut::new(out, String::new()), None)
         } else {
-            player.money -= price;
-            let _: Option<u8> = player.ownership.insert(tile_id, house_count + 1);
+            player.build(colour, price, house_count);
 
             let out: String = if house_count == 4 {
                 format!("Built 3 hotels. {} in the bank", player.money)
